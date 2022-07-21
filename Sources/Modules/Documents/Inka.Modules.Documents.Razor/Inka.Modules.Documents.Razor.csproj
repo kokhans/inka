@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Serhii Kokhan</Authors>
+    <Description>Inka Razor document module.</Description>
+    <Copyright>© 2022 Serhii Kokhan</Copyright>
+    <PackageTags>inka, razor</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Submodules\carcass\Sources\FrontMatter\Carcass.FrontMatter.Razor\Carcass.FrontMatter.Razor.csproj" />
+    <ProjectReference Include="..\..\..\..\Submodules\carcass\Sources\Mvc\Razor\Carcass.Mvc.Razor.Rendering\Carcass.Mvc.Razor.Rendering.csproj" />
+    <ProjectReference Include="..\..\..\Inka.Engine\Inka.Engine.csproj" />
+  </ItemGroup>
+
+</Project>

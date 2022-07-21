@@ -1,0 +1,4 @@
+[submodule "Submodules/carcass"]
+	path = Submodules/carcass
+	url = git@github.com:kokhans/carcass.git
+	branch = main

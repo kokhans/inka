@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Serhii Kokhan</Authors>
+    <Description>Inka Markdown document module.</Description>
+    <Copyright>© 2022 Serhii Kokhan</Copyright>
+    <PackageTags>inka, markdown</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Submodules\carcass\Sources\FrontMatter\Carcass.FrontMatter.Core\Carcass.FrontMatter.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\Submodules\carcass\Sources\FrontMatter\Carcass.FrontMatter.Markdown\Carcass.FrontMatter.Markdown.csproj" />
+    <ProjectReference Include="..\..\..\..\Submodules\carcass\Sources\Yaml\Carcass.Yaml.YamlDotNet\Carcass.Yaml.YamlDotNet.csproj" />
+    <ProjectReference Include="..\..\..\Inka.Engine\Inka.Engine.csproj" />
+  </ItemGroup>
+
+</Project>
