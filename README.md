@@ -1,6 +1,6 @@
 ﻿# Inka [![GitHub](https://img.shields.io/github/license/kokhans/inka?style=flat-square)](LICENSE)
 
-`Inka` is a cross-platform static site generator built with [.NET 6](https://docs.microsoft.com/en-us/dotnet/core/whats-new/dotnet-6), based on rendering `Markdown` and `Razor` markup languages into `HTML`.
+`Inka` is a cross-platform static site generator built with `.NET 6`, based on rendering `Markdown` and `Razor` markups to `HTML` document.
 
 ## Status
 
@@ -11,38 +11,35 @@ The software is still under active development and not feature complete or ready
 ## Features
 
 - Engine configuration via file
-- Configurable routing
-- Markdown processor
-- Markdown YAML front matter parser
-- Razor processor
-- Razor YAML front matter parser
-- Razor layout
-- Razor rendering data context
-- Less style sheet preprocessor
-- Static files copier
-- HTML minifier
+- Flexible routing
+- `Markdown` and `Razor` processors
+- `YAML` front matter parser
+- `Razor` layouting and data context rendering
+- `Less` stylesheets preprocessor
+- Static content copier
+- `HTML` document minifier
 - Rich CLI output
-- Sitemap.xml generator
+- Sitemap generator
 
 ## Getting Started
 
-### Download .NET 6 SDK
+**Prerequisites**
+- [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/vs/)
 
-Download [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0) or newer.
-
-### Create .NET Core Console Application
+**Step 1: Create .NET Core console application**
 
 ```powershell
 dotnet new console
 ```
 
-### Install Inka.Engine
+**Step 2: Install Inka.Engine**
 
 ```powershell
 dotnet add package Inka.Engine
 ```
 
-### Create Bootstrapper
+**Step 3: Create Bootstrapper**
 
 ```csharp
 using Inka.Engine.Bootstrapping;
@@ -53,9 +50,11 @@ await Bootstrapper
     .RunAsync()
 ```
 
-### Add Modules
+**Step 4: Add modules**
 
-### Run It!
+**Step 5: Configure pipeline**
+
+**Step 6: Run application**
 
 ```powershell
 dotnet run
@@ -63,45 +62,45 @@ dotnet run
 
 ## Modules
 
-`Inka` provides a set of modules that can be used to extend and customize static site generation pipeline.
+`Inka` provides a set of modules that can be used to extend and customize the static site generation pipeline.
 
-## Documents
+### Documents
 
-### Markdown
+#### Markdown
 
-`Markdown` document module.
+`Markdown` document module provides `Markdown` markup to `HTML` document rendering.
 
-### Razor
+#### Razor
 
-`Razor` document module.
+`Razor` document module provides `Razor` markup to `HTML` document rendering.
 
-### Less
+#### Less
 
-`Less` document module.
+`Less` document module provides `.less` to `.css` stylesheets compilation.
 
-### Static
+#### Static
 
-Static document module.
+`Static` document module provides copying of static content to the output directory.
 
-### MinifyHtml
+#### MinifyHtml
 
-Minify `HTML` document module.
+`MinifyHtml` document module provides `HTML` document minification.
 
-## Operations
+### Operations
 
-### Output
+#### Output
 
-Output operation module.
+`Output` operation module provides copying of document content from the pipeline context to the output directory.
 
-### Sitemap
+#### Sitemap
 
-Sitemap operation module.
+`Sitemap` operation module provides automatic `sitemap.xml` generation.
 
 ## Templates
 
-## Blog
+### Blog
 
-Blog template.
+`Blog` template provides content structure and pipeline configuration to build a static blog site.
 
 ## License
 

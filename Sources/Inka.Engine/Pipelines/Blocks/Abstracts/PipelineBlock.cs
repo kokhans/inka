@@ -41,7 +41,7 @@ public abstract class PipelineBlock
     protected PipelineBlocksBuilder PipelineBlocksBuilder { get; }
     public abstract PipelineBlockType Type { get; }
 
-    protected IPipe GetPipe(string moduleName, Action<PipeConfiguration>? configurationAction = null)
+    protected IPipe GetPipe(string moduleName, Action<PipeConfiguration>? configurationAction = default)
     {
         ArgumentVerifier.NotNull(moduleName, nameof(moduleName));
 

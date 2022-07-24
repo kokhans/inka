@@ -36,7 +36,7 @@ public sealed class SequentialPipelineBlock : PipelineBlock
     public override PipelineBlockType Type => PipelineBlockType.Sequential;
     public IPipe? Pipe { get; private set; }
 
-    public PipelineBlocksBuilder WithPipe(string moduleName, Action<PipeConfiguration>? configurationAction = null)
+    public PipelineBlocksBuilder WithPipe(string moduleName, Action<PipeConfiguration>? configurationAction = default)
     {
         ArgumentVerifier.NotNull(moduleName, nameof(moduleName));
 
