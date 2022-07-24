@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Sources\Inka.Engine\Inka.Engine.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Documents\Inka.Modules.Documents.MinifyHtml\Inka.Modules.Documents.MinifyHtml.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Documents\Inka.Modules.Documents.Less\Inka.Modules.Documents.Less.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Documents\Inka.Modules.Documents.Markdown\Inka.Modules.Documents.Markdown.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Documents\Inka.Modules.Documents.Razor\Inka.Modules.Documents.Razor.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Documents\Inka.Modules.Documents.Static\Inka.Modules.Documents.Static.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Operations\Inka.Modules.Operations.Output\Inka.Modules.Operations.Output.csproj" />
+    <ProjectReference Include="..\..\Sources\Modules\Operations\Inka.Modules.Operations.Sitemap\Inka.Modules.Operations.Sitemap.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\input\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,42 @@
+﻿@using Inka.Modules.Documents.Razor.Navs
+@model Inka.Modules.Documents.Razor.SiteViewModel
+
+@*front-matter
+title: Posts
+created_at: 01/01/2022
+is_draft: false
+x_ref: posts
+*@
+
+<h2>@Model.SiteTitle</h2>
+<section class="posts">
+    @{
+        foreach (IGrouping<string?, Nav> navs in Model.Navs.GetNavsBySubRoute("/posts/").GroupBy(n => n.FrontMatter!.CreatedAt).ToList())
+        {
+            <h3>@navs.Key</h3>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                @foreach (Nav nav in navs)
+                {
+                    if (nav.FrontMatter!.XRef is not null && nav.FrontMatter!.XRef.Equals("posts"))
+                        continue;
+                    <div class="card">
+                        <img src="@nav.FrontMatter?.BriefLogo" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">@nav.FrontMatter!.Title</h5>
+                            <p class="card-text">@nav.FrontMatter!.Brief</p>
+                            <a href="@nav.Route" class="btn btn-secondary">Read</a>
+                        </div>
+                        <div class="card-footer">
+                            @{
+                                foreach (string tag in nav.FrontMatter.Tags)
+                                {
+                                    <span class="badge bg-danger">@tag</span>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</section>

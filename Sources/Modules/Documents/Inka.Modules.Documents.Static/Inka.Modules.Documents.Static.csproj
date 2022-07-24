@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Serhii Kokhan</Authors>
+    <Description>Inka static document module.</Description>
+    <Copyright>© 2022 Serhii Kokhan</Copyright>
+    <PackageTags>inka, static</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Inka.Engine\Inka.Engine.csproj"/>
+  </ItemGroup>
+
+</Project>

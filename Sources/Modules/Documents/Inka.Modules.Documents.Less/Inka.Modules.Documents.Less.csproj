@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Serhii Kokhan</Authors>
+    <Description>Inka Less document module.</Description>
+    <Copyright>© 2022 Serhii Kokhan</Copyright>
+    <PackageTags>inka, less</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dotless.Core" Version="1.6.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Inka.Engine\Inka.Engine.csproj" />
+  </ItemGroup>
+
+</Project>
