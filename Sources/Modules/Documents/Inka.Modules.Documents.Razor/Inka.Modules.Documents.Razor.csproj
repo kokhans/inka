@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka Razor document module.</Description>
+    <Description>Razor document module provides Razor markup to HTML document rendering.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka, razor</PackageTags>
   </PropertyGroup>

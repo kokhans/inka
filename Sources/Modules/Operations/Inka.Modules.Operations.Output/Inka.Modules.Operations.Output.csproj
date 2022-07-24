@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka output operation module.</Description>
+    <Description>Output operation module provides copying of document content from the pipeline context to the output directory.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka, output</PackageTags>
   </PropertyGroup>

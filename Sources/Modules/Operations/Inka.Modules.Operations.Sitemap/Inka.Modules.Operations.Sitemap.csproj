@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka sitemap operation module.</Description>
+    <Description>Sitemap operation module provides automatic sitemap.xml generation.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka, sitemap</PackageTags>
   </PropertyGroup>

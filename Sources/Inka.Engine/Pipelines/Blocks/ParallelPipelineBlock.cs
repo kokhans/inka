@@ -41,7 +41,7 @@ public sealed class ParallelPipelineBlock : PipelineBlock
     public override PipelineBlockType Type => PipelineBlockType.Parallel;
     public ReadOnlyCollection<IPipe> Pipes => _pipes.AsReadOnlyCollection();
 
-    public ParallelPipelineBlock WithPipe(string moduleName, Action<PipeConfiguration>? configurationAction = null)
+    public ParallelPipelineBlock WithPipe(string moduleName, Action<PipeConfiguration>? configurationAction = default)
     {
         ArgumentVerifier.NotNull(moduleName, nameof(moduleName));
 

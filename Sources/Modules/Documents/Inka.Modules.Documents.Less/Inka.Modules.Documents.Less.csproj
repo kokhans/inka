@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka Less document module.</Description>
+    <Description>Less document module provides .less to .css stylesheets compilation.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka, less</PackageTags>
   </PropertyGroup>

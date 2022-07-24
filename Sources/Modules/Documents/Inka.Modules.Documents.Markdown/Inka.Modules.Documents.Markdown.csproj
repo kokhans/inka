@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka Markdown document module.</Description>
+    <Description>Markdown document module provides Markdown markup to HTML document rendering.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka, markdown</PackageTags>
   </PropertyGroup>

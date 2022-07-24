@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Serhii Kokhan</Authors>
-    <Description>Inka is a cross-platform static site generator built with .NET 6, based on rendering Markdown and Razor markup languages into HTML.</Description>
+    <Description>Inka is a cross-platform static site generator built with .NET 6, based on rendering Markdown and Razor markups to HTML document.</Description>
     <Copyright>© 2022 Serhii Kokhan</Copyright>
     <PackageTags>inka</PackageTags>
   </PropertyGroup>
