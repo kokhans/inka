@@ -23,23 +23,36 @@ The software is still under active development and not feature complete or ready
 
 ## Getting Started
 
-**Prerequisites**
+### Prerequisites
+
 - [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/vs/)
 
-**Step 1: Create .NET Core console application**
+### Installation
 
-```powershell
-dotnet new console
-```
-
-**Step 2: Install Inka.Engine**
+To install `Inka.Engine` and its dependencies via `.NET Core CLI`, execute the following command.
 
 ```powershell
 dotnet add package Inka.Engine
 ```
 
-**Step 3: Create Bootstrapper**
+To install `Inka.Engine` and its dependencies via `NuGet`, execute the following command.
+
+```powershell
+Install-Package Inka.Engine
+```
+
+### Basic Usage
+
+The easiest way to get started with `Inka` is by hosting `Inka.Engine` inside the `.NET Core` console application.
+
+To create `.NET Core` console application, execute the following command.
+
+```powershell
+dotnet new console
+```
+
+To instantiate and run `Bootstrapper`, use the following code.
 
 ```csharp
 using Inka.Engine.Bootstrapping;
@@ -50,11 +63,10 @@ await Bootstrapper
     .RunAsync()
 ```
 
-**Step 4: Add modules**
+During the `Bootstrapper` instantiation, it will create an execution pipeline under the hood. This pipeline could be extended and configured via the preinstalled external modules.
+To extend and configure the execution pipeline, use the `Configure` method from the `BootstrapperBuilder` class.
 
-**Step 5: Configure pipeline**
-
-**Step 6: Run application**
+To run the application, execute the following command.
 
 ```powershell
 dotnet run
