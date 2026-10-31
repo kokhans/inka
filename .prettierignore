@@ -1,0 +1,10 @@
+dist
+.inka
+.next
+.react-router
+build
+node_modules
+coverage
+pnpm-lock.yaml
+next-env.d.ts
+AGENTS.md
