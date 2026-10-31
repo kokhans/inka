@@ -1,0 +1,32 @@
+{
+  "name": "@inka/example-next",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#inka": "./.inka/index.js",
+    "#inka/*": "./.inka/*"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "inka": "workspace:*",
+    "mermaid": "^12.2.0",
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/node": "^22.19.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

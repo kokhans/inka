@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+.inka
+next-env.d.ts
+public/sitemap.xml
+public/rss.xml
+AGENTS.md

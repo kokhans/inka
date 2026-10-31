@@ -1,0 +1,7 @@
+node_modules
+build
+.inka
+.react-router
+public/sitemap.xml
+public/rss.xml
+AGENTS.md
