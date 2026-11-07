@@ -8,3 +8,5 @@ coverage
 pnpm-lock.yaml
 next-env.d.ts
 AGENTS.md
+.tanstack
+routeTree.gen.ts

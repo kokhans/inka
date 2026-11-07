@@ -23,7 +23,7 @@ flowchart TD
 3. **Render** the Markdown to HTML with GFM and Shiki highlighting.
 4. **Write** the entry, the search index and the feeds.
 
-## Errors carry context
+## Errors Carry Context
 
 A validation error names the file, the field and the reason:
 

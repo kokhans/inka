@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:examples": "pnpm --filter @inka/example-next build && pnpm --filter @inka/example-react-router build"
+    "build:examples": "pnpm --filter @inka/example-next build && pnpm --filter @inka/example-react-router build && pnpm --filter @inka/example-tanstack-start build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

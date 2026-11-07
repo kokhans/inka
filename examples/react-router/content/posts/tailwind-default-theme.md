@@ -13,7 +13,7 @@ plugin adds typography styles for rendered Markdown.
 @plugin '@tailwindcss/typography';
 ```
 
-## Keep the defaults
+## Keep the Defaults
 
 Sticking to the default palette and spacing makes the markup predictable. A post
 page only needs a centered container and the `prose` classes:

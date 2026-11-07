@@ -41,6 +41,12 @@ export type NextMetadata = {
 export type ReactRouterMeta =
   { title: string } | { name: string; content: string } | { property: string; content: string }
 
+export type TanStackHead = {
+  meta: ReactRouterMeta[]
+  links: { rel: 'canonical'; href: string }[]
+  scripts: { type: 'application/ld+json'; children: string }[]
+}
+
 export type BlogPosting = {
   '@context': 'https://schema.org'
   '@type': 'BlogPosting'
@@ -126,5 +132,18 @@ export function jsonLd(entry: SeoEntry): BlogPosting {
     ...(fields.publishedTime ? { datePublished: fields.publishedTime } : {}),
     ...(fields.modifiedTime ? { dateModified: fields.modifiedTime } : {}),
     ...(fields.image ? { image: fields.image } : {}),
+  }
+}
+
+export function toHead(entry: SeoEntry): TanStackHead {
+  return {
+    meta: toMeta(entry),
+    links: [{ rel: 'canonical', href: entry.url }],
+    scripts: [
+      {
+        type: 'application/ld+json',
+        children: JSON.stringify(jsonLd(entry)).replaceAll('<', '\\u003c'),
+      },
+    ],
   }
 }

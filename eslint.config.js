@@ -9,6 +9,8 @@ export default tseslint.config(
       '**/.inka/**',
       '**/.next/**',
       '**/.react-router/**',
+      '**/.tanstack/**',
+      '**/routeTree.gen.ts',
       '**/build/**',
       '**/node_modules/**',
       '**/coverage/**',
@@ -36,7 +38,12 @@ export default tseslint.config(
       '@typescript-eslint/unified-signatures': 'off',
       '@typescript-eslint/only-throw-error': [
         'error',
-        { allow: [{ from: 'lib', name: 'Response' }] },
+        {
+          allow: [
+            { from: 'lib', name: 'Response' },
+            { from: 'package', name: 'NotFoundError', package: '@tanstack/router-core' },
+          ],
+        },
       ],
     },
   },

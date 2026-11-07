@@ -10,7 +10,7 @@ Inka reads a folder of Markdown files with YAML frontmatter and generates typed
 collections, a search index, a sitemap and an RSS feed. Everything happens at
 build time, so the app only ships JSON and plain JavaScript.
 
-## What it does
+## What It Does
 
 The integration runs `build()` when the dev server starts and on every content
 change. The output lives in `.inka/` and looks like this:
@@ -22,7 +22,7 @@ const latest = posts.list()
 const page = posts.query({ where: { tags: { has: 'react' } }, page: 2, perPage: 5 })
 ```
 
-## Why not read files at runtime
+## Why Not Read Files at Runtime
 
 Reading `.md` files while the server runs breaks on serverless platforms, where
 the source files are not part of the deployment. Generating the content at build
