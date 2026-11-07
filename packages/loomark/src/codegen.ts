@@ -6,6 +6,69 @@ export type BuiltCollection = {
   entries: Entry[]
 }
 
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/
+const RESERVED_WORDS = new Set([
+  'arguments',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'eval',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+])
+const INTERNAL_PREFIX = '__loomark'
+const CREATE_COLLECTION = `${INTERNAL_PREFIX}CreateCollection`
+
+export function assertCollectionName(name: string): void {
+  if (!IDENTIFIER.test(name) || RESERVED_WORDS.has(name) || name.startsWith(INTERNAL_PREFIX)) {
+    throw new Error(
+      `loomark: invalid collection name "${name}". Collection names become JavaScript exports, ` +
+        'so use letters, digits, _ or $ (for example "blogPosts"), not a reserved word.',
+    )
+  }
+}
+
 export function renderIndexModule(collections: BuiltCollection[]): string {
   const imports = collections.map(
     (item) => `import ${entryName(item.name)} from './${item.name}.json'`,
@@ -13,7 +76,7 @@ export function renderIndexModule(collections: BuiltCollection[]): string {
   const declarations = collections.map((item) => renderCollection(item))
 
   return [
-    `import { createCollection } from 'inka/query'`,
+    `import { createCollection as ${CREATE_COLLECTION} } from 'loomark/query'`,
     ...imports,
     '',
     ...declarations,
@@ -25,11 +88,11 @@ export function renderIndexTypes(
   collections: BuiltCollection[],
   configImport: string | undefined,
 ): string {
-  const imports = [`import type { Collection } from 'inka/query'`]
+  const imports = [`import type { Collection } from 'loomark/query'`]
   imports.push(
     configImport
-      ? `import type { EntryOf } from 'inka'`
-      : `import type { Entry } from 'inka/query'`,
+      ? `import type { EntryOf } from 'loomark'`
+      : `import type { Entry } from 'loomark/query'`,
   )
   if (configImport) imports.push(`import type config from '${configImport}'`)
 
@@ -60,7 +123,7 @@ function renderCollection(item: BuiltCollection): string {
   const dates = collectDateFields(item.entries)
   if (dates.length > 0) config['dates'] = dates
 
-  return `export const ${item.name} = createCollection(${entryName(item.name)}, ${renderObject(config)})\n`
+  return `export const ${item.name} = ${CREATE_COLLECTION}(${entryName(item.name)}, ${renderObject(config)})\n`
 }
 
 function renderObject(value: Record<string, unknown>): string {
@@ -69,5 +132,5 @@ function renderObject(value: Record<string, unknown>): string {
 }
 
 function entryName(collection: string): string {
-  return `${collection}Entries`
+  return `${INTERNAL_PREFIX}_${collection}`
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { PostCard } from '../../../components/PostCard'
 
 export const Route = createFileRoute('/tags/$tag')({
@@ -11,7 +11,7 @@ export const Route = createFileRoute('/tags/$tag')({
   },
   head: ({ params }) => ({
     meta: [
-      { title: `Posts tagged ${params.tag} · Inka Blog` },
+      { title: `Posts tagged ${params.tag} · Loomark Blog` },
       { name: 'description', content: `All posts tagged ${params.tag}.` },
     ],
   }),

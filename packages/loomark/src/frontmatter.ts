@@ -6,14 +6,14 @@ export type FrontmatterResult = {
   body: string
 }
 
-const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n?---(?:\r?\n|$)/
+const FRONTMATTER = /^---\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/
 
 export function parseFrontmatter(source: string): FrontmatterResult {
   const match = FRONTMATTER.exec(source)
   if (!match) return { data: {}, body: source }
 
   return {
-    data: parseData(match[1]),
+    data: parseData(match[1] ?? ''),
     body: source.slice(match[0].length),
   }
 }

@@ -1,8 +1,11 @@
-import { pages } from '#inka'
+import { pages } from '#loomark'
 import { ArticleContent } from '../../components/ArticleContent'
 
 export function meta() {
-  return [{ title: 'About · Inka Blog' }, { name: 'description', content: 'About this demo blog.' }]
+  return [
+    { title: 'About · Loomark Blog' },
+    { name: 'description', content: 'About this demo blog.' },
+  ]
 }
 
 export default function AboutRoute() {

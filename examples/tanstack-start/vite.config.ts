@@ -1,8 +1,8 @@
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import { build } from 'inka'
-import { inka } from 'inka/vite'
+import { build } from 'loomark'
+import { loomark } from 'loomark/vite'
 import { defineConfig } from 'vite'
 
 function collectTags(posts: Record<string, unknown>[]): string[] {
@@ -32,7 +32,7 @@ const paths = [
 
 export default defineConfig({
   plugins: [
-    inka(),
+    loomark(),
     tailwindcss(),
     tanstackStart({
       prerender: { enabled: true, crawlLinks: false },

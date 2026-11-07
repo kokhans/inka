@@ -1,9 +1,9 @@
 import type { NextConfig } from 'next'
-import { withInka } from 'inka/next'
+import { withLoomark } from 'loomark/next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   agentRules: false,
 }
 
-export default withInka(nextConfig)
+export default withLoomark(nextConfig)

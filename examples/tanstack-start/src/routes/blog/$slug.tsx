@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { posts } from '#inka'
-import { toHead } from 'inka/seo'
+import { posts } from '#loomark'
+import { toHead } from 'loomark/seo'
 import { AppLink } from '../../../components/AppLink'
 import { ArticleContent } from '../../../components/ArticleContent'
 import { TableOfContents } from '../../../components/TableOfContents'

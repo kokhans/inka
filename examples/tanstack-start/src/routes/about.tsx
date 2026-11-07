@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { pages } from '#inka'
+import { pages } from '#loomark'
 import { ArticleContent } from '../../components/ArticleContent'
 
 export const Route = createFileRoute('/about')({
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/about')({
   },
   head: () => ({
     meta: [
-      { title: 'About · Inka Blog' },
+      { title: 'About · Loomark Blog' },
       { name: 'description', content: 'About this demo blog.' },
     ],
   }),

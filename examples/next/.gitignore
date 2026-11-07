@@ -1,7 +1,7 @@
 node_modules
 .next
 out
-.inka
+.loomark
 next-env.d.ts
 public/sitemap.xml
 public/rss.xml

@@ -6,7 +6,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
-      '**/.inka/**',
+      '**/.loomark/**',
       '**/.next/**',
       '**/.react-router/**',
       '**/.tanstack/**',

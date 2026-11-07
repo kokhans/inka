@@ -1,6 +1,7 @@
 export { collection, defineConfig, z } from './config.js'
 export { build, resolveProject } from './build.js'
 export type {
+  BuildMode,
   BuildOptions,
   BuildResult,
   CollectionDefinition,
@@ -9,7 +10,7 @@ export type {
   EntryFields,
   EntryMeta,
   EntryOf,
-  InkaConfig,
+  LoomarkConfig,
   Project,
   RuntimeCollection,
   SearchOption,

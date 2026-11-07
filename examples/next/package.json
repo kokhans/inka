@@ -1,11 +1,11 @@
 {
-  "name": "@inka/example-next",
+  "name": "@loomark/example-next",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "imports": {
-    "#inka": "./.inka/index.js",
-    "#inka/*": "./.inka/*"
+    "#loomark": "./.loomark/index.js",
+    "#loomark/*": "./.loomark/*"
   },
   "scripts": {
     "dev": "next dev",
@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "inka": "workspace:*",
+    "loomark": "workspace:*",
     "mermaid": "^12.2.0",
     "next": "^16.4.3",
     "react": "^19.3.1",

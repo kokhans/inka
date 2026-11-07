@@ -1,5 +1,5 @@
 {
-  "name": "inka-monorepo",
+  "name": "loomark-monorepo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,12 +8,12 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm --filter inka build",
-    "test": "pnpm --filter inka test",
+    "build": "pnpm --filter loomark build",
+    "test": "pnpm --filter loomark test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:examples": "pnpm --filter @inka/example-next build && pnpm --filter @inka/example-react-router build && pnpm --filter @inka/example-tanstack-start build"
+    "build:examples": "pnpm --filter @loomark/example-next build && pnpm --filter @loomark/example-react-router build && pnpm --filter @loomark/example-tanstack-start build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { build } from '../src/build.js'
 import { collection, defineConfig } from '../src/config.js'
-import type { InkaConfig } from '../src/types.js'
+import type { LoomarkConfig } from '../src/types.js'
 
 const created: string[] = []
 
@@ -14,7 +14,7 @@ afterAll(async () => {
 })
 
 const HELLO = `---
-title: Hello Inka
+title: Hello Loomark
 description: A first post
 date: 2026-01-15
 tags: [react, mermaid]
@@ -67,13 +67,13 @@ date: yesterday
 Broken body.
 `
 
-function testConfig(): InkaConfig {
+function testConfig(): LoomarkConfig {
   return defineConfig({
     siteUrl: 'https://example.com',
     title: 'Test Blog',
-    description: 'Testing inka',
+    description: 'Testing loomark',
     contentDir: 'content',
-    outDir: '.inka',
+    outDir: '.loomark',
     publicDir: 'public',
     collections: {
       posts: collection({
@@ -100,7 +100,7 @@ function testConfig(): InkaConfig {
 }
 
 async function createProject(files: Record<string, string>): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'inka-build-'))
+  const root = await mkdtemp(path.join(os.tmpdir(), 'loomark-build-'))
   created.push(root)
 
   const defaults: Record<string, string> = {
@@ -120,7 +120,7 @@ async function createProject(files: Record<string, string>): Promise<string> {
 }
 
 async function readOutput(root: string, name: string): Promise<string> {
-  return readFile(path.join(root, '.inka', name), 'utf8')
+  return readFile(path.join(root, '.loomark', name), 'utf8')
 }
 
 describe('build', () => {
@@ -153,9 +153,11 @@ describe('build', () => {
     await build({ cwd: root, config: testConfig() })
 
     const index = await readOutput(root, 'index.js')
-    expect(index).toContain(`import { createCollection } from 'inka/query'`)
-    expect(index).toContain(`import postsEntries from './posts.json'`)
-    expect(index).toContain('export const posts = createCollection(postsEntries')
+    expect(index).toContain(
+      `import { createCollection as __loomarkCreateCollection } from 'loomark/query'`,
+    )
+    expect(index).toContain(`import __loomark_posts from './posts.json'`)
+    expect(index).toContain('export const posts = __loomarkCreateCollection(__loomark_posts')
     expect(index).toContain(`dates: ["date"]`)
 
     const types = await readOutput(root, 'index.d.ts')
@@ -218,6 +220,44 @@ describe('build', () => {
     }
   })
 
+  it('uses the mode option over NODE_ENV', async () => {
+    const root = await createProject({})
+    const result = await build({ cwd: root, config: testConfig(), mode: 'production' })
+
+    expect(result.entries['posts'].map((entry) => entry.slug)).toEqual(['hello', '2026/nested'])
+  })
+
+  it('reports duplicate slugs and keeps the first entry', async () => {
+    const root = await createProject({
+      'content/posts/copy.md': HELLO.replace('title: Hello Loomark', 'title: Copy\nslug: hello'),
+    })
+    const result = await build({ cwd: root, config: testConfig() })
+
+    expect(result.errors).toEqual([
+      {
+        file: 'content/posts/hello.md',
+        collection: 'posts',
+        field: 'slug',
+        message: 'Duplicate slug "hello", already used by content/posts/copy.md',
+      },
+    ])
+    const hellos = result.entries['posts'].filter((entry) => entry.slug === 'hello')
+    expect(hellos.map((entry) => entry.filePath)).toEqual(['content/posts/copy.md'])
+  })
+
+  it.each(['blog-posts', 'default', '1posts', '__loomarkPosts'])(
+    'rejects the collection name %s',
+    async (name) => {
+      const root = await createProject({})
+      const config = testConfig()
+      const collections = { [name]: config.collections['pages'] }
+
+      await expect(build({ cwd: root, config: { ...config, collections } })).rejects.toThrow(
+        `loomark: invalid collection name "${name}"`,
+      )
+    },
+  )
+
   it('fails in production when content is invalid', async () => {
     vi.stubEnv('NODE_ENV', 'production')
 
@@ -242,14 +282,14 @@ describe('build', () => {
 
   it('loads the config file and generates typed collections', async () => {
     const root = await createProject({
-      'inka.config.ts': [
+      'loomark.config.ts': [
         'const schema = {',
         '  safeParse: (data: Record<string, unknown>) => ({ success: true, data }),',
         '}',
         '',
         'export default {',
         "  contentDir: 'content',",
-        "  outDir: '.inka',",
+        "  outDir: '.loomark',",
         '  collections: {',
         '    posts: {',
         "      folder: 'posts',",
@@ -269,9 +309,28 @@ describe('build', () => {
     expect(result.entries['posts']).toHaveLength(3)
 
     const types = await readOutput(root, 'index.d.ts')
-    expect(types).toContain(`import type config from '../inka.config'`)
+    expect(types).toContain(`import type config from '../loomark.config'`)
     expect(types).toContain(
       'export declare const posts: Collection<EntryOf<typeof config.collections.posts>>',
     )
+  })
+
+  it('picks up config edits on the next build', async () => {
+    const configSource = (folder: string): string =>
+      [
+        'const schema = { safeParse: (data: unknown) => ({ success: true, data }) }',
+        'export default {',
+        `  collections: { posts: { folder: '${folder}', schema, url: () => '/' } },`,
+        '}',
+        '',
+      ].join('\n')
+    const root = await createProject({ 'loomark.config.ts': configSource('pages') })
+
+    const first = await build({ cwd: root })
+    expect(first.entries['posts'].map((entry) => entry.slug)).toEqual(['about'])
+
+    await writeFile(path.join(root, 'loomark.config.ts'), configSource('posts'))
+    const second = await build({ cwd: root })
+    expect(second.entries['posts']).toHaveLength(3)
   })
 })

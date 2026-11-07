@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { Pagination } from '../../../components/Pagination'
 import { PostCard } from '../../../components/PostCard'
 import { SearchForm } from '../../../components/SearchForm'
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/blog/')({
   },
   head: () => ({
     meta: [
-      { title: 'Blog · Inka Blog' },
+      { title: 'Blog · Loomark Blog' },
       { name: 'description', content: 'All posts, newest first.' },
     ],
   }),

@@ -49,7 +49,8 @@ export async function createEntry(input: EntryInput): Promise<EntryResult> {
 
   const fields = validated.data
   const rendered = await renderMarkdown(frontmatter.body)
-  const slug = slugOf(fields, input.folder, input.filePath)
+  // `z.object()` strips unknown keys, so fall back to the raw frontmatter for `slug`.
+  const slug = slugOf({ ...frontmatter.data, ...fields }, input.folder, input.filePath)
   const excerpt = typeof fields['excerpt'] === 'string' ? fields['excerpt'] : rendered.excerpt
 
   const entry: Entry = {

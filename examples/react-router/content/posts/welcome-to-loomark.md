@@ -1,22 +1,22 @@
 ---
-title: Welcome to Inka
+title: Welcome to Loomark
 description: A small content library that turns Markdown folders into typed collections for React apps.
 date: 2026-10-20
-tags: [inka, markdown]
+tags: [loomark, markdown]
 cover: /images/layers.svg
 ---
 
-Inka reads a folder of Markdown files with YAML frontmatter and generates typed
+Loomark reads a folder of Markdown files with YAML frontmatter and generates typed
 collections, a search index, a sitemap and an RSS feed. Everything happens at
 build time, so the app only ships JSON and plain JavaScript.
 
 ## What It Does
 
 The integration runs `build()` when the dev server starts and on every content
-change. The output lives in `.inka/` and looks like this:
+change. The output lives in `.loomark/` and looks like this:
 
 ```ts
-import { posts } from '#inka'
+import { posts } from '#loomark'
 
 const latest = posts.list()
 const page = posts.query({ where: { tags: { has: 'react' } }, page: 2, perPage: 5 })

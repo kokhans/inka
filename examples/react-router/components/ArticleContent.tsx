@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { renderMermaid } from 'inka/mermaid'
+import { renderMermaid } from 'loomark/mermaid'
 
 type ArticleContentProps = {
   html: string

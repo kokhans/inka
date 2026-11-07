@@ -1,13 +1,13 @@
-# Inka
+# Loomark
 
-Inka is a build-time Markdown content library for React apps. This repository holds the library,
+Loomark is a build-time Markdown content library for React apps. This repository holds the library,
 its tests and example apps.
 
-Usage documentation lives in the package README: [packages/inka/README.md](packages/inka/README.md).
+Usage documentation lives in the package README: [packages/loomark/README.md](packages/loomark/README.md).
 
 ## Repository Layout
 
-- `packages/inka`: the published `inka` package. Source in `src/`, tests in `test/`.
+- `packages/loomark`: the published `loomark` package. Source in `src/`, tests in `test/`.
 - `examples/next`: Next.js App Router example.
 - `examples/react-router`: React Router v8 framework mode example.
 - `examples/tanstack-start`: TanStack Start example.

@@ -2,7 +2,7 @@
 title: How the content pipeline works
 description: From a Markdown file on disk to a typed entry in the app bundle.
 date: 2026-10-06
-tags: [inka, build, markdown]
+tags: [loomark, build, markdown]
 ---
 
 Every file goes through the same four steps. The integrations only decide _when_
@@ -14,7 +14,7 @@ flowchart TD
   B --> C{Valid?}
   C -->|No| D[Collect error]
   C -->|Yes| E[Render Markdown]
-  E --> F[Write .inka output]
+  E --> F[Write .loomark output]
   D --> F
 ```
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { jsonLd, toHead, toMeta, toMetadata, toSeoFields } from '../src/seo/index.js'
 
 const entry = {
-  title: 'Hello Inka',
+  title: 'Hello Loomark',
   description: 'A first post',
   url: '/blog/hello',
   date: new Date('2026-01-15T00:00:00.000Z'),
@@ -13,7 +13,7 @@ const entry = {
 describe('seo helpers', () => {
   it('maps entry fields once', () => {
     expect(toSeoFields(entry)).toEqual({
-      title: 'Hello Inka',
+      title: 'Hello Loomark',
       description: 'A first post',
       canonical: '/blog/hello',
       publishedTime: '2026-01-15T00:00:00.000Z',
@@ -25,7 +25,7 @@ describe('seo helpers', () => {
   it('builds next metadata', () => {
     const metadata = toMetadata(entry)
 
-    expect(metadata.title).toBe('Hello Inka')
+    expect(metadata.title).toBe('Hello Loomark')
     expect(metadata.alternates).toEqual({ canonical: '/blog/hello' })
     expect(metadata.openGraph.publishedTime).toBe('2026-01-15T00:00:00.000Z')
     expect(metadata.openGraph.images).toEqual([{ url: 'https://example.com/cover.png' }])
@@ -60,7 +60,7 @@ describe('seo helpers', () => {
   it('builds react router meta descriptors', () => {
     const meta = toMeta(entry)
 
-    expect(meta[0]).toEqual({ title: 'Hello Inka' })
+    expect(meta[0]).toEqual({ title: 'Hello Loomark' })
     expect(meta).toContainEqual({ name: 'description', content: 'A first post' })
     expect(meta).toContainEqual({ property: 'og:image', content: 'https://example.com/cover.png' })
   })
@@ -69,7 +69,7 @@ describe('seo helpers', () => {
     expect(jsonLd(entry)).toEqual({
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
-      headline: 'Hello Inka',
+      headline: 'Hello Loomark',
       description: 'A first post',
       url: '/blog/hello',
       datePublished: '2026-01-15T00:00:00.000Z',

@@ -37,7 +37,7 @@ export function formatError(error: ValidationError): string {
 
 export function reportErrors(errors: ValidationError[]): void {
   for (const error of errors) {
-    console.warn(`inka: ${formatError(error)}`)
+    console.warn(`loomark: ${formatError(error)}`)
   }
 }
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { pages } from '#inka'
+import { pages } from '#loomark'
 import { ArticleContent } from '../../components/ArticleContent'
 
 export const metadata: Metadata = {
