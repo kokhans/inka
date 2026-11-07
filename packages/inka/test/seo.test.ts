@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonLd, toMeta, toMetadata, toSeoFields } from '../src/seo/index.js'
+import { jsonLd, toHead, toMeta, toMetadata, toSeoFields } from '../src/seo/index.js'
 
 const entry = {
   title: 'Hello Inka',
@@ -38,6 +38,23 @@ describe('seo helpers', () => {
     expect(metadata.openGraph).not.toHaveProperty('images')
     expect(metadata.openGraph).not.toHaveProperty('publishedTime')
     expect(metadata.twitter.card).toBe('summary')
+  })
+
+  it('builds tanstack router head options', () => {
+    const head = toHead(entry)
+
+    expect(head.meta).toEqual(toMeta(entry))
+    expect(head.links).toEqual([{ rel: 'canonical', href: '/blog/hello' }])
+    expect(head.scripts).toEqual([
+      { type: 'application/ld+json', children: JSON.stringify(jsonLd(entry)) },
+    ])
+  })
+
+  it('escapes html in tanstack router json-ld', () => {
+    const head = toHead({ ...entry, title: '</script><b>' })
+
+    expect(head.scripts[0]?.children).not.toContain('<')
+    expect(JSON.parse(head.scripts[0]?.children ?? '')).toMatchObject({ headline: '</script><b>' })
   })
 
   it('builds react router meta descriptors', () => {

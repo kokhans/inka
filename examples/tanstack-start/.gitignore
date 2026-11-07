@@ -1,0 +1,8 @@
+node_modules
+dist
+.inka
+.output
+.tanstack
+src/routeTree.gen.ts
+public/sitemap.xml
+public/rss.xml

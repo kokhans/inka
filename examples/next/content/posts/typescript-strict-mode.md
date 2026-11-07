@@ -14,7 +14,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 ```
 
-## Narrow, do not cast
+## Narrow, Do Not Cast
 
 A type guard keeps the compiler informed and costs nothing at runtime. Casts
 silence the compiler and move the mistake to runtime, where it is harder to find.

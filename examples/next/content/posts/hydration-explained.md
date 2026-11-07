@@ -21,7 +21,7 @@ sequenceDiagram
   R->>B: Updated DOM
 ```
 
-## Why it matters
+## Why It Matters
 
 Before hydration finishes, the page is visible but not interactive. Long
 hydration tasks block the main thread, so the click feels lost even though the

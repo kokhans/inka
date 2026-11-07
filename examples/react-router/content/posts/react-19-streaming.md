@@ -27,7 +27,7 @@ React sends the `<main>` element as soon as it is ready and streams the
 `<SlowList>` markup once the promise resolves. Nothing special is needed on the
 server: the framework splits the stream for you.
 
-## Where the boundary belongs
+## Where the Boundary Belongs
 
 Put the boundary close to the data, not around the whole page. A page level
 boundary only delays the fallback and hides the parts that were ready long ago.
