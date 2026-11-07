@@ -1,5 +1,5 @@
 import type { Config } from '@react-router/dev/config'
-import { build } from 'inka'
+import { build } from 'loomark'
 
 function collectTags(posts: Record<string, unknown>[]): string[] {
   const tags = new Set<string>()

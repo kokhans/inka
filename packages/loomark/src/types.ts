@@ -57,7 +57,7 @@ export type RuntimeCollection = {
   perPage?: number
 }
 
-export type InkaConfig = {
+export type LoomarkConfig = {
   siteUrl?: string
   title?: string
   description?: string
@@ -74,10 +74,13 @@ export type ValidationError = {
   message: string
 }
 
+export type BuildMode = 'development' | 'production'
+
 export type BuildOptions = {
   cwd?: string
-  config?: InkaConfig
+  config?: LoomarkConfig
   configFile?: string
+  mode?: BuildMode
 }
 
 export type BuildResult = {
@@ -87,7 +90,7 @@ export type BuildResult = {
 
 export type Project = {
   cwd: string
-  config: InkaConfig
+  config: LoomarkConfig
   configFile: string | undefined
   contentDir: string
   outDir: string

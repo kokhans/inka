@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router'
 import { useLoaderData } from 'react-router'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { Pagination } from '../../components/Pagination'
 import { PostCard } from '../../components/PostCard'
 import { SearchForm } from '../../components/SearchForm'
@@ -25,7 +25,7 @@ export function loader({ request }: LoaderFunctionArgs) {
 
 export function meta() {
   return [
-    { title: 'Blog · Inka Blog' },
+    { title: 'Blog · Loomark Blog' },
     { name: 'description', content: 'All posts, newest first.' },
   ]
 }

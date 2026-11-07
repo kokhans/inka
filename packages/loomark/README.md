@@ -1,6 +1,6 @@
-# Inka
+# Loomark
 
-Inka turns folders of Markdown files with YAML frontmatter into typed, queryable content for
+Loomark turns folders of Markdown files with YAML frontmatter into typed, queryable content for
 React apps. It works with **Next.js (App Router)**, **React Router v8 (framework mode)** and
 **TanStack Start**.
 
@@ -19,13 +19,13 @@ Content is edited by hand in your editor. There is no admin UI, no database and 
 ## Quick Start: Next.js
 
 ```bash
-pnpm add inka
+pnpm add loomark
 ```
 
-`inka.config.ts` in the project root:
+`loomark.config.ts` in the project root:
 
 ```ts
-import { collection, defineConfig, z } from 'inka'
+import { collection, defineConfig, z } from 'loomark'
 
 export default defineConfig({
   siteUrl: 'https://myblog.dev',
@@ -57,32 +57,33 @@ export default defineConfig({
 `next.config.ts`:
 
 ```ts
-import { withInka } from 'inka/next'
+import { withLoomark } from 'loomark/next'
 
-export default withInka({
+export default withLoomark({
   reactStrictMode: true,
 })
 ```
 
-`withInka` runs `build()` before the config is handed to Next.js, so `next build` and `next dev`
+`withLoomark` runs `build()` before the config is handed to Next.js, so `next build` and `next dev`
 always start from fresh content. In development it also watches the content folder and rebuilds
-when a Markdown file changes.
+when a Markdown file changes. Changes to `loomark.config.ts` are not watched, so restart `next dev`
+after editing it. `next start` skips the build and serves the content bundled by `next build`.
 
-Map the `#inka` alias in `package.json`:
+Map the `#loomark` alias in `package.json`:
 
 ```json
 {
   "imports": {
-    "#inka": "./.inka/index.js",
-    "#inka/*": "./.inka/*"
+    "#loomark": "./.loomark/index.js",
+    "#loomark/*": "./.loomark/*"
   }
 }
 ```
 
-Add `.inka/` to `.gitignore`, then use the generated collections:
+Add `.loomark/` to `.gitignore`, then use the generated collections:
 
 ```tsx
-import { posts } from '#inka'
+import { posts } from '#loomark'
 
 export default async function BlogPage() {
   const { items, totalPages } = posts.query({ page: 1, perPage: 10 })
@@ -97,21 +98,22 @@ export default async function BlogPage() {
 ```ts
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
-import { inka } from 'inka/vite'
+import { loomark } from 'loomark/vite'
 
 export default defineConfig({
-  plugins: [inka(), reactRouter()],
+  plugins: [loomark(), reactRouter()],
 })
 ```
 
-`inka()` runs `build()` when the dev server or a production build starts, rebuilds on Markdown
-changes with the Vite watcher, and triggers a reload.
+`loomark()` runs `build()` when the dev server or a production build starts, rebuilds on Markdown
+and `loomark.config.ts` changes with the Vite watcher, and triggers a reload. Files imported by
+`loomark.config.ts` are not reloaded, so restart the dev server after editing them.
 
 Dynamic routes are prerendered from the same data:
 
 ```ts
 import type { Config } from '@react-router/dev/config'
-import { build } from 'inka'
+import { build } from 'loomark'
 
 export default {
   async prerender() {
@@ -133,15 +135,15 @@ The `package.json` `imports` alias and the `.gitignore` entry are the same as fo
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import { build } from 'inka'
-import { inka } from 'inka/vite'
+import { build } from 'loomark'
+import { loomark } from 'loomark/vite'
 
 const { entries } = await build()
 const posts = entries['posts'] ?? []
 
 export default defineConfig({
   plugins: [
-    inka(),
+    loomark(),
     tanstackStart({
       prerender: { enabled: true, crawlLinks: false },
       pages: ['/', '/blog', ...posts.map((post) => post.url)].map((path) => ({ path })),
@@ -151,15 +153,15 @@ export default defineConfig({
 })
 ```
 
-The same `inka()` plugin as for React Router builds the content and reloads on changes. Prerendering
+The same `loomark()` plugin as for React Router builds the content and reloads on changes. Prerendering
 is optional; `pages` lists the dynamic routes from the same data.
 
 Load entries in a route `loader` and set the head with `toHead()`:
 
 ```tsx
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { posts } from '#inka'
-import { toHead } from 'inka/seo'
+import { posts } from '#loomark'
+import { toHead } from 'loomark/seo'
 
 export const Route = createFileRoute('/blog/$slug')({
   loader: ({ params }) => {
@@ -178,15 +180,18 @@ The `package.json` `imports` alias and the `.gitignore` entry are the same as fo
 
 `defineConfig()` takes:
 
-| Field         | Default     | Description                                                         |
-| ------------- | ----------- | ------------------------------------------------------------------- |
-| `siteUrl`     | –           | Absolute URL of the site. Required for `sitemap.xml` and `rss.xml`. |
-| `title`       | `'Blog'`    | Feed title.                                                         |
-| `description` | `''`        | Feed description.                                                   |
-| `contentDir`  | `'content'` | Folder that holds the collections.                                  |
-| `outDir`      | `'.inka'`   | Folder for the generated output.                                    |
-| `publicDir`   | –           | When set, the feeds are also copied there.                          |
-| `collections` | –           | Collection definitions keyed by name.                               |
+| Field         | Default      | Description                                                         |
+| ------------- | ------------ | ------------------------------------------------------------------- |
+| `siteUrl`     | –            | Absolute URL of the site. Required for `sitemap.xml` and `rss.xml`. |
+| `title`       | `'Blog'`     | Feed title.                                                         |
+| `description` | `''`         | Feed description.                                                   |
+| `contentDir`  | `'content'`  | Folder that holds the collections.                                  |
+| `outDir`      | `'.loomark'` | Folder for the generated output.                                    |
+| `publicDir`   | –            | When set, the feeds are also copied there.                          |
+| `collections` | –            | Collection definitions keyed by name.                               |
+
+Collection names become exports of `.loomark/index.js`, so they must be valid JavaScript identifiers
+such as `posts` or `blogPosts`. A name like `blog-posts` or a reserved word fails the build.
 
 `collection()` takes:
 
@@ -208,8 +213,13 @@ becomes `2026/my-post`. A `slug` field in the frontmatter overrides it.
 
 ### Drafts
 
-An entry with `draft: true` stays visible while `NODE_ENV !== 'production'`. Production builds
-drop it from the JSON output, the sitemap and the RSS feed.
+An entry with `draft: true` stays visible in development builds. Production builds drop it from
+the JSON output, the sitemap and the RSS feed.
+
+The integrations pick the mode for you: `next dev` and `vite dev` build in development mode,
+`next build` and `vite build` in production mode. `build()` falls back to `NODE_ENV`. Pass
+`mode: 'development'` or `mode: 'production'` to either integration or to `build()` to override
+it.
 
 ### Validation
 
@@ -220,13 +230,17 @@ and the reason:
 content/posts/hello.md: "date" — Expected date, received "yesterday"
 ```
 
+Two entries of the same collection with the same slug are reported as an error on the second
+file, and only the first one is kept.
+
 In development the error is printed as a warning and the remaining content is still generated.
-In production it fails the build.
+In production it fails the build. When a rebuild in the dev server fails, for example because of a
+broken config, the error is logged and the dev server keeps running.
 
 ## Generated Output
 
 ```text
-.inka/
+.loomark/
   index.js               createCollection() calls for every collection
   index.d.ts             types inferred from the Zod schemas
   posts.json             full entries, including html and body
@@ -236,12 +250,17 @@ In production it fails the build.
   rss.xml
 ```
 
+`posts.json` holds the rendered HTML of every entry, and `.loomark/index.js` imports it. Import
+`.loomark` from server code (Server Components, loaders). In client components that only need titles,
+dates or tags, import `posts.list.json` instead, so the HTML of every entry stays out of the
+browser bundle.
+
 `index.d.ts` points back to your config, so entry types stay in sync with the schemas:
 
 ```ts
-import type { Collection } from 'inka/query'
-import type { EntryOf } from 'inka'
-import type config from '../inka.config'
+import type { Collection } from 'loomark/query'
+import type { EntryOf } from 'loomark'
+import type config from '../loomark.config'
 
 export declare const posts: Collection<EntryOf<typeof config.collections.posts>>
 ```
@@ -269,7 +288,7 @@ Date fields become `Date` instances at runtime.
 ## Query API
 
 ```ts
-import { posts } from '#inka'
+import { posts } from '#loomark'
 ```
 
 | Method                    | Returns                                                                 |
@@ -336,8 +355,8 @@ posts.related('hydration-explained', { by: 'tags', limit: 3 })
 The search index is a separate JSON file, so it never ends up in the main bundle:
 
 ```tsx
-import { createSearch } from 'inka/search'
-import searchIndex from '#inka/posts.search.json'
+import { createSearch } from 'loomark/search'
+import searchIndex from '#loomark/posts.search.json'
 
 const search = createSearch(searchIndex)
 const hits = search.search('hydration', { limit: 10 })
@@ -352,7 +371,7 @@ diagram source, and the entry gets `hasMermaid: true`.
 
 ```tsx
 import { useEffect, useRef } from 'react'
-import { renderMermaid } from 'inka/mermaid'
+import { renderMermaid } from 'loomark/mermaid'
 
 export function Article({ html, hasMermaid }: { html: string; hasMermaid: boolean }) {
   const container = useRef<HTMLDivElement>(null)
@@ -398,10 +417,10 @@ Shiki renders both themes into CSS variables. Add this to your stylesheet:
 
 ## SEO Helpers
 
-`inka/seo` maps one entry to the shape each framework expects:
+`loomark/seo` maps one entry to the shape each framework expects:
 
 ```ts
-import { jsonLd, toMetadata } from 'inka/seo'
+import { jsonLd, toMetadata } from 'loomark/seo'
 
 export async function generateMetadata({ params }) {
   const post = posts.get((await params).slug)
@@ -410,7 +429,7 @@ export async function generateMetadata({ params }) {
 ```
 
 ```ts
-import { jsonLd, toMeta } from 'inka/seo'
+import { jsonLd, toMeta } from 'loomark/seo'
 
 export function meta({ data }) {
   return [...toMeta(data.post), { 'script:ld+json': jsonLd(data.post) }]
@@ -418,7 +437,7 @@ export function meta({ data }) {
 ```
 
 ```ts
-import { toHead } from 'inka/seo'
+import { toHead } from 'loomark/seo'
 
 export const Route = createFileRoute('/blog/$slug')({
   head: ({ loaderData }) => (loaderData ? toHead(loaderData.post) : {}),
@@ -437,22 +456,23 @@ consistent.
 ## `build()` API
 
 ```ts
-import { build } from 'inka'
+import { build } from 'loomark'
 
 const { entries, errors } = await build()
 ```
 
-`build()` loads `inka.config.ts`, generates `.inka/` and returns every entry per collection
+`build()` loads `loomark.config.ts`, generates `.loomark/` and returns every entry per collection
 together with the validation errors. Both integrations call it, and you can call it from your own
 scripts.
 
 Options:
 
-| Option       | Default            | Description                                |
-| ------------ | ------------------ | ------------------------------------------ |
-| `cwd`        | `process.cwd()`    | Project root.                              |
-| `config`     | –                  | Inline config instead of `inka.config.ts`. |
-| `configFile` | `'inka.config.ts'` | Config file relative to `cwd`.             |
+| Option       | Default               | Description                                   |
+| ------------ | --------------------- | --------------------------------------------- |
+| `cwd`        | `process.cwd()`       | Project root.                                 |
+| `config`     | –                     | Inline config instead of `loomark.config.ts`. |
+| `configFile` | `'loomark.config.ts'` | Config file relative to `cwd`.                |
+| `mode`       | from `NODE_ENV`       | `'development'` or `'production'`.            |
 
 `resolveProject(options)` returns the resolved paths when you need them in a custom integration.
 
@@ -467,14 +487,14 @@ Options:
 
 Runtime entries shipped to the browser:
 
-| Entry          | Raw    | Gzip   |
-| -------------- | ------ | ------ |
-| `inka/query`   | 9.1 kB | 2.8 kB |
-| `inka/search`  | 0.9 kB | 0.4 kB |
-| `inka/mermaid` | 0.7 kB | 0.4 kB |
+| Entry             | Raw    | Gzip   |
+| ----------------- | ------ | ------ |
+| `loomark/query`   | 9.1 kB | 2.8 kB |
+| `loomark/search`  | 0.9 kB | 0.4 kB |
+| `loomark/mermaid` | 0.7 kB | 0.4 kB |
 
-`inka/query` includes its shared sorting helper. `inka/search` does not include `minisearch`, and
-`inka/mermaid` does not include `mermaid`; both are loaded from dependencies at runtime.
+`loomark/query` includes its shared sorting helper. `loomark/search` does not include `minisearch`, and
+`loomark/mermaid` does not include `mermaid`; both are loaded from dependencies at runtime.
 
 ## FAQ
 
@@ -499,11 +519,11 @@ It does not affect:
 
 ### How Do I Use a Different URL in Development, Staging and Production?
 
-`inka.config.ts` is plain TypeScript evaluated by Node at build time, so `process.env` works
+`loomark.config.ts` is plain TypeScript evaluated by Node at build time, so `process.env` works
 normally.
 
 ```ts
-import { collection, defineConfig, z } from 'inka'
+import { collection, defineConfig, z } from 'loomark'
 
 const siteUrl = process.env.SITE_URL
 
@@ -547,15 +567,15 @@ Keep in mind:
 - The URL is baked into the generated files at build time. Building each environment separately
   is fine; promoting one staging artifact to production would ship staging URLs.
 - The library does not load `.env` files. Environment variables from your shell or CI always work.
-  Next.js loads `.env*` before it evaluates `next.config.ts`, which is where `withInka` runs
+  Next.js loads `.env*` before it evaluates `next.config.ts`, which is where `withLoomark` runs
   `build()`; the Vite config (React Router, TanStack Start) is evaluated in Node, so use real environment
   variables there.
 - If the URL is only known at deploy time, leave `siteUrl` out and call `build()` from your own
   script with an overriding config:
 
 ```ts
-import { build } from 'inka'
-import config from './inka.config'
+import { build } from 'loomark'
+import config from './loomark.config'
 
 const siteUrl = process.env.SITE_URL
 await build({ config: siteUrl ? { ...config, siteUrl } : config })
@@ -563,9 +583,9 @@ await build({ config: siteUrl ? { ...config, siteUrl } : config })
 
 ### How Does `sitemap.xml` Work Next to the Sitemap My Framework Generates?
 
-Inka writes a file, it does not merge with or reference anything else:
+Loomark writes a file, it does not merge with or reference anything else:
 
-- `.inka/sitemap.xml`, always written when `siteUrl` is set.
+- `.loomark/sitemap.xml`, always written when `siteUrl` is set.
 - `public/sitemap.xml`, a copy of the same file, written when `publicDir` is configured.
 
 So if you already have `app/sitemap.ts` in Next.js or a `/sitemap.xml` route in React Router or TanStack Start, you
@@ -573,12 +593,12 @@ have two producers for the same URL. Which one answers the request depends on th
 (Next.js resolves app routes before `public/`, `react-router-serve` serves static files first), so
 do not rely on that order. Pick one owner.
 
-**Your sitemap stays the owner.** Use the collections as data and add Inka entries to the sitemap
+**Your sitemap stays the owner.** Use the collections as data and add Loomark entries to the sitemap
 you already have:
 
 ```ts
 import type { MetadataRoute } from 'next'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages = ['/', '/blog', '/about'].map((path) => ({ url: `https://myblog.dev${path}` }))
@@ -593,11 +613,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
 In React Router and TanStack Start the same data goes into a server route that returns the XML.
 
-**Inka stays the owner.** Drop your own generator and keep `publicDir: 'public'`. Be aware that
+**Loomark stays the owner.** Drop your own generator and keep `publicDir: 'public'`. Be aware that
 the generated sitemap only contains collection entries, so your home page, the blog index and the
 tag pages are not in it.
 
-**Sitemap index.** Search engines accept an index that references several sitemaps, but Inka
+**Sitemap index.** Search engines accept an index that references several sitemaps, but Loomark
 always uses the name `sitemap.xml` and does not generate an index, so you would have to move or
 rename the generated file in a post-build step.
 
@@ -614,21 +634,21 @@ Related limitations:
 
 ### Which Package Managers Are Supported?
 
-`pnpm add inka` is just pnpm syntax. The package is a normal registry package and works with any
+`pnpm add loomark` is just pnpm syntax. The package is a normal registry package and works with any
 manager:
 
-- **pnpm**: `pnpm add inka`
-- **npm**: `npm install inka`
-- **Yarn** (classic or berry): `yarn add inka`
-- **Bun**: `bun add inka`
-- **Deno**: `deno add npm:inka`
+- **pnpm**: `pnpm add loomark`
+- **npm**: `npm install loomark`
+- **Yarn** (classic or berry): `yarn add loomark`
+- **Bun**: `bun add loomark`
+- **Deno**: `deno add npm:loomark`
 
 What the package expects, independent of the manager:
 
 - ESM only. `"type": "module"`, and the `exports` map exposes `types`, `import` and `default`
-  conditions but no `require`, so `require('inka')` is not supported.
+  conditions but no `require`, so `require('loomark')` is not supported.
 - No postinstall scripts and no native modules, `"sideEffects": false`, `"engines": { "node": ">=22" }`.
 - `mermaid` is an optional peer dependency. Install it with the same manager when you use
-  `inka/mermaid`.
-- The `#inka` alias relies on the `imports` field in your `package.json`, which every manager
+  `loomark/mermaid`.
+- The `#loomark` alias relies on the `imports` field in your `package.json`, which every manager
   writes identically; the resolver (Next.js, Vite, Node) does the rest.

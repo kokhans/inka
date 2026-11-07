@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { PostCard } from '../../../components/PostCard'
 
 type TagParams = {

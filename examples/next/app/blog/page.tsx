@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { Pagination } from '../../components/Pagination'
 import { PostCard } from '../../components/PostCard'
 import { SearchForm } from '../../components/SearchForm'

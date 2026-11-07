@@ -1,7 +1,12 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { renderIndexModule, renderIndexTypes, type BuiltCollection } from './codegen.js'
+import {
+  assertCollectionName,
+  renderIndexModule,
+  renderIndexTypes,
+  type BuiltCollection,
+} from './codegen.js'
 import { createEntry, isDraft } from './entry.js'
 import { renderRss, type RssItem } from './rss.js'
 import { createSearchIndex } from './search-index.js'
@@ -11,21 +16,24 @@ import { joinUrl } from './shared/url.js'
 import { compareValues, isRecord, readField } from './shared/values.js'
 import { renderSitemap } from './sitemap.js'
 import type {
+  BuildMode,
   BuildOptions,
   BuildResult,
   Entry,
-  InkaConfig,
+  LoomarkConfig,
   Project,
   RuntimeCollection,
   ValidationError,
 } from './types.js'
 import { formatError, reportErrors } from './validate.js'
 
-const DEFAULT_CONFIG_FILE = 'inka.config.ts'
+const DEFAULT_CONFIG_FILE = 'loomark.config.ts'
 const DEFAULT_CONTENT_DIR = 'content'
-const DEFAULT_OUT_DIR = '.inka'
+const DEFAULT_OUT_DIR = '.loomark'
 const MARKDOWN_EXTENSION = '.md'
 const TYPESCRIPT_EXTENSION = '.ts'
+
+let configVersion = 0
 
 type Feed = {
   name: string
@@ -33,7 +41,7 @@ type Feed = {
 }
 
 type LoadedConfig = {
-  config: InkaConfig
+  config: LoomarkConfig
   configFile: string | undefined
 }
 
@@ -55,12 +63,15 @@ export async function resolveProject(options: BuildOptions = {}): Promise<Projec
 
 export async function build(options: BuildOptions = {}): Promise<BuildResult> {
   const project = await resolveProject(options)
+  const mode = options.mode ?? (isProduction() ? 'production' : 'development')
   const errors: ValidationError[] = []
   const collections: BuiltCollection[] = []
   const entries: Record<string, Entry[]> = {}
 
+  for (const name of Object.keys(project.config.collections)) assertCollectionName(name)
+
   for (const [name, definition] of Object.entries(project.config.collections)) {
-    const built = await buildCollection(project, name, definition, errors)
+    const built = await buildCollection(project, mode, name, definition, errors)
     collections.push(built)
     entries[name] = built.entries
   }
@@ -68,9 +79,9 @@ export async function build(options: BuildOptions = {}): Promise<BuildResult> {
   await writeOutput(project, collections)
 
   if (errors.length > 0) {
-    if (isProduction()) {
+    if (mode === 'production') {
       const label = errors.length === 1 ? 'file' : 'files'
-      const heading = `inka: ${String(errors.length)} invalid content ${label}`
+      const heading = `loomark: ${String(errors.length)} invalid content ${label}`
       throw new Error(`${heading}\n${errors.map(formatError).join('\n')}`)
     }
     reportErrors(errors)
@@ -81,17 +92,21 @@ export async function build(options: BuildOptions = {}): Promise<BuildResult> {
 
 async function loadConfig(cwd: string, configFile: string | undefined): Promise<LoadedConfig> {
   const file = path.resolve(cwd, configFile ?? DEFAULT_CONFIG_FILE)
-  const loaded = (await import(pathToFileURL(file).href)) as { default?: unknown }
+  // Node caches imported modules, so a unique query is needed to pick up config edits in dev.
+  configVersion += 1
+  const url = `${pathToFileURL(file).href}?v=${String(configVersion)}`
+  const loaded = (await import(/* @vite-ignore */ url)) as { default?: unknown }
 
   if (!isRecord(loaded.default) || !isRecord(loaded.default['collections'])) {
-    throw new Error(`inka: expected ${file} to default-export a config object with collections`)
+    throw new Error(`loomark: expected ${file} to default-export a config object with collections`)
   }
 
-  return { config: loaded.default as InkaConfig, configFile: file }
+  return { config: loaded.default as LoomarkConfig, configFile: file }
 }
 
 async function buildCollection(
   project: Project,
+  mode: BuildMode,
   name: string,
   definition: RuntimeCollection,
   errors: ValidationError[],
@@ -115,8 +130,31 @@ async function buildCollection(
     else errors.push(...result.errors)
   }
 
-  const visible = isProduction() ? collected.filter((entry) => !isDraft(entry)) : collected
-  return { name, definition, entries: sortEntries(visible, definition.sort) }
+  const visible = mode === 'production' ? collected.filter((entry) => !isDraft(entry)) : collected
+  const unique = dropDuplicateSlugs(visible, name, errors)
+  return { name, definition, entries: sortEntries(unique, definition.sort) }
+}
+
+function dropDuplicateSlugs(
+  entries: Entry[],
+  collection: string,
+  errors: ValidationError[],
+): Entry[] {
+  const seen = new Map<string, Entry>()
+  for (const entry of entries) {
+    const first = seen.get(entry.slug)
+    if (!first) {
+      seen.set(entry.slug, entry)
+      continue
+    }
+    errors.push({
+      file: entry.filePath,
+      collection,
+      field: 'slug',
+      message: `Duplicate slug "${entry.slug}", already used by ${first.filePath}`,
+    })
+  }
+  return [...seen.values()]
 }
 
 async function listMarkdownFiles(folder: string): Promise<string[]> {

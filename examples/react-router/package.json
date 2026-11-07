@@ -1,11 +1,11 @@
 {
-  "name": "@inka/example-react-router",
+  "name": "@loomark/example-react-router",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "imports": {
-    "#inka": "./.inka/index.js",
-    "#inka/*": "./.inka/*"
+    "#loomark": "./.loomark/index.js",
+    "#loomark/*": "./.loomark/*"
   },
   "scripts": {
     "dev": "react-router dev",
@@ -16,7 +16,7 @@
   "dependencies": {
     "@react-router/node": "^8.5.1",
     "@react-router/serve": "^8.5.1",
-    "inka": "workspace:*",
+    "loomark": "workspace:*",
     "isbot": "^5.1.31",
     "mermaid": "^12.2.0",
     "react": "^19.3.1",

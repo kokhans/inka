@@ -1,6 +1,6 @@
 node_modules
 dist
-.inka
+.loomark
 .output
 .tanstack
 src/routeTree.gen.ts

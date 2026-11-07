@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { createSearch } from 'inka/search'
-import type { SearchIndex } from 'inka/search'
-import searchIndex from '#inka/posts.search.json'
+import { createSearch } from 'loomark/search'
+import type { SearchIndex } from 'loomark/search'
+import searchIndex from '#loomark/posts.search.json'
 
 export function meta() {
   return [
-    { title: 'Search · Inka Blog' },
+    { title: 'Search · Loomark Blog' },
     { name: 'description', content: 'Instant search over the generated content index.' },
   ]
 }

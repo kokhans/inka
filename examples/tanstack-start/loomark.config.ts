@@ -1,11 +1,11 @@
-import { defineConfig, collection, z } from 'inka'
+import { defineConfig, collection, z } from 'loomark'
 
 export default defineConfig({
-  siteUrl: 'https://inka.example.com',
-  title: 'Inka Blog',
-  description: 'A small blog built with Inka, TanStack Start and Tailwind CSS.',
+  siteUrl: 'https://loomark.example.com',
+  title: 'Loomark Blog',
+  description: 'A small blog built with Loomark, TanStack Start and Tailwind CSS.',
   contentDir: 'content',
-  outDir: '.inka',
+  outDir: '.loomark',
   publicDir: 'public',
   collections: {
     posts: collection({

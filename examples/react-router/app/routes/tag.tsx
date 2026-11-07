@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { PostCard } from '../../components/PostCard'
 
 export function loader({ params }: LoaderFunctionArgs) {
@@ -15,7 +15,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
   const tag = loaderData?.tag ?? 'tag'
 
   return [
-    { title: `Posts tagged ${tag} · Inka Blog` },
+    { title: `Posts tagged ${tag} · Loomark Blog` },
     { name: 'description', content: `All posts tagged ${tag}.` },
   ]
 }

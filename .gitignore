@@ -3,6 +3,6 @@ dist
 .next
 build
 coverage
-.inka
+.loomark
 *.tsbuildinfo
 .DS_Store

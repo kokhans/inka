@@ -1,4 +1,4 @@
-import { posts } from '#inka'
+import { posts } from '#loomark'
 import { AppLink } from '../components/AppLink'
 import { PostCard } from '../components/PostCard'
 
@@ -9,7 +9,7 @@ export default function HomePage() {
     <div>
       <h1 className="text-3xl font-bold tracking-tight">Notes on building for the web</h1>
       <p className="mt-3 text-zinc-600 dark:text-zinc-400">
-        A demo blog rendered from Markdown files by Inka. Content is generated at build time; the
+        A demo blog rendered from Markdown files by Loomark. Content is generated at build time; the
         app only reads typed collections.
       </p>
 

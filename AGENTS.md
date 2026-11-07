@@ -1,12 +1,12 @@
 # Agents
 
-Inka is a build-time Markdown content library for React apps (Next.js App Router, React Router v8
+Loomark is a build-time Markdown content library for React apps (Next.js App Router, React Router v8
 and TanStack Start). It turns Markdown files with YAML frontmatter into typed JSON collections, a
-search index, `sitemap.xml` and `rss.xml` inside `.inka/`.
+search index, `sitemap.xml` and `rss.xml` inside `.loomark/`.
 
 ## Layout
 
-- `packages/inka`: the library. Source in `src/`, tests in `test/`.
+- `packages/loomark`: the library. Source in `src/`, tests in `test/`.
 - `src/build.ts`: entry point of the build pipeline.
 - `src/query`, `src/search`, `src/mermaid`, `src/seo`: runtime entries, shipped to the browser.
 - `src/next`, `src/vite`: framework integrations.
@@ -29,9 +29,9 @@ pnpm build:examples   # build all example apps
 - Node 22+, ESM only, pnpm workspace.
 - Keep runtime entries small and free of build-time dependencies.
 - Prettier style: no semicolons, single quotes, 100 character lines.
-- Add or update tests in `packages/inka/test` for behavior changes.
-- Usage docs live in `packages/inka/README.md`, development docs in the root `README.md`.
-- Keep `packages/inka/README.md` in sync with public API changes.
+- Add or update tests in `packages/loomark/test` for behavior changes.
+- Usage docs live in `packages/loomark/README.md`, development docs in the root `README.md`.
+- Keep `packages/loomark/README.md` in sync with public API changes.
 
 ## Markdown Conventions
 

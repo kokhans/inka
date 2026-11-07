@@ -2,7 +2,7 @@
 title: Roadmap for the next release
 description: Ideas that are not ready yet.
 date: 2026-10-28
-tags: [inka]
+tags: [loomark]
 draft: true
 ---
 

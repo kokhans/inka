@@ -1,9 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { createSearch } from 'inka/search'
-import type { SearchIndex } from 'inka/search'
-import searchIndex from '#inka/posts.search.json'
+import { createSearch } from 'loomark/search'
+import type { SearchIndex } from 'loomark/search'
+import searchIndex from '#loomark/posts.search.json'
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')

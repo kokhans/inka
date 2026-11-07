@@ -30,6 +30,13 @@ describe('parseFrontmatter', () => {
     expect(result.body).toBe('Body')
   })
 
+  it('only closes the frontmatter on a line of its own', () => {
+    const result = parseFrontmatter('---\ntitle: Wait---\nsubtitle: More\n---\nBody')
+
+    expect(result.data).toEqual({ title: 'Wait---', subtitle: 'More' })
+    expect(result.body).toBe('Body')
+  })
+
   it('throws for invalid YAML', () => {
     expect(() => parseFrontmatter('---\ntitle: [unclosed\n---\nBody')).toThrow()
   })
