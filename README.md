@@ -7,7 +7,8 @@ Usage documentation lives in the package README: [packages/loomark/README.md](pa
 
 ## Repository Layout
 
-- `packages/loomark`: the published `loomark` package. Source in `src/`, tests in `test/`.
+- `packages/loomark`: the published `loomark` package. Source in `src/`, tests in `test/`. Type
+  tests live in `test/*.test-d.ts`.
 - `examples/next`: Next.js App Router example.
 - `examples/react-router`: React Router v8 framework mode example.
 - `examples/tanstack-start`: TanStack Start example.
@@ -22,11 +23,22 @@ Usage documentation lives in the package README: [packages/loomark/README.md](pa
 ```bash
 pnpm install
 pnpm build            # build the library with tsdown
-pnpm test             # run the vitest suite
+pnpm test             # run the vitest suite, including type tests
 pnpm lint             # eslint with typescript-eslint strict rules
 pnpm format:check     # prettier
 pnpm build:examples   # build all example apps
 ```
+
+`pnpm build` runs two tsdown builds into `dist/`: the build-time entries (`loomark`, `loomark/next`,
+`loomark/vite` and the `loomark` CLI in `src/cli`) for Node, and the runtime entries (`loomark/query`, `loomark/search`,
+`loomark/mermaid`, `loomark/seo`) for a neutral platform, because they ship to the browser. Keep
+Node APIs and build-time dependencies out of the runtime entries.
+
+`pnpm test` also type checks `test/*.test-d.ts` through Vitest typecheck mode, so a type regression
+fails the suite like any other test.
+
+pnpm links the `loomark` binary into the examples at install time, so after the first `pnpm build`
+run `pnpm install` once to use `pnpm exec loomark` there.
 
 The monorepo is pnpm specific (`pnpm-workspace.yaml` and the `workspace:*` protocol in the
 examples). The published package works with any package manager.
@@ -42,3 +54,9 @@ All example apps render the same blog from the same content folder:
 Each one has a post list with pagination, tag filters and search, a post page with table of
 contents, prev/next links, related posts, JSON-LD and Mermaid diagrams, plus a client-side search
 page, `sitemap.xml` and `rss.xml`.
+
+## Publishing
+
+`prepublishOnly` builds the library, so `npm publish` never ships a stale `dist/`. npm only packs
+files from `packages/loomark`, so `packages/loomark/LICENSE` is a copy of the root `LICENSE`. Keep
+both in sync.

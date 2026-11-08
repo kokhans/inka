@@ -19,6 +19,7 @@ describe('seo helpers', () => {
       publishedTime: '2026-01-15T00:00:00.000Z',
       modifiedTime: '2026-02-01T00:00:00.000Z',
       image: 'https://example.com/cover.png',
+      authors: [],
     })
   })
 
@@ -76,5 +77,60 @@ describe('seo helpers', () => {
       dateModified: '2026-02-01T00:00:00.000Z',
       image: 'https://example.com/cover.png',
     })
+  })
+})
+
+describe('seo options', () => {
+  const relative = { ...entry, cover: '/images/cover.png' }
+  const options = { siteUrl: 'https://myblog.dev/' }
+
+  it('makes canonical URLs and relative images absolute with siteUrl', () => {
+    const fields = toSeoFields(relative, options)
+
+    expect(fields.canonical).toBe('https://myblog.dev/blog/hello')
+    expect(fields.image).toBe('https://myblog.dev/images/cover.png')
+    expect(toSeoFields(entry, options).image).toBe('https://example.com/cover.png')
+  })
+
+  it('uses absolute URLs in every helper', () => {
+    expect(toMetadata(relative, options).alternates.canonical).toBe('https://myblog.dev/blog/hello')
+    expect(toMetadata(relative, options).openGraph.url).toBe('https://myblog.dev/blog/hello')
+    expect(toMeta(relative, options)).toContainEqual({
+      property: 'og:url',
+      content: 'https://myblog.dev/blog/hello',
+    })
+    expect(toHead(relative, options).links).toEqual([
+      { rel: 'canonical', href: 'https://myblog.dev/blog/hello' },
+    ])
+    expect(jsonLd(relative, options)).toMatchObject({
+      url: 'https://myblog.dev/blog/hello',
+      image: 'https://myblog.dev/images/cover.png',
+    })
+  })
+
+  it('falls back to the default image when the entry has no cover', () => {
+    const plain = { title: 'Hi', description: 'Desc', url: '/hi' }
+
+    expect(toSeoFields(plain, { ...options, image: '/og.png' }).image).toBe(
+      'https://myblog.dev/og.png',
+    )
+    expect(toSeoFields(entry, { image: '/og.png' }).image).toBe('https://example.com/cover.png')
+  })
+
+  it('adds authors from the entry or the default author', () => {
+    const ada = { name: 'Ada', url: 'https://ada.dev' }
+
+    expect(jsonLd(entry, { author: ada }).author).toEqual({ '@type': 'Person', ...ada })
+    expect(jsonLd({ ...entry, author: ['Ada', 'Grace'] }, { author: 'Default' }).author).toEqual([
+      { '@type': 'Person', name: 'Ada' },
+      { '@type': 'Person', name: 'Grace' },
+    ])
+    expect(toMetadata(entry, { author: 'Ada' }).authors).toEqual([{ name: 'Ada' }])
+    expect(toMeta({ ...entry, author: ['Ada', 'Grace'] })).toContainEqual({
+      name: 'author',
+      content: 'Ada, Grace',
+    })
+    expect(jsonLd(entry)).not.toHaveProperty('author')
+    expect(toMetadata(entry)).not.toHaveProperty('authors')
   })
 })

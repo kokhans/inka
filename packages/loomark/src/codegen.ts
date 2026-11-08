@@ -71,7 +71,7 @@ export function assertCollectionName(name: string): void {
 
 export function renderIndexModule(collections: BuiltCollection[]): string {
   const imports = collections.map(
-    (item) => `import ${entryName(item.name)} from './${item.name}.json'`,
+    (item) => `import ${entryName(item.name)} from './${item.name}.json' with { type: 'json' }`,
   )
   const declarations = collections.map((item) => renderCollection(item))
 

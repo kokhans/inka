@@ -38,7 +38,7 @@ describe('renderRss', () => {
       ],
     })
 
-    expect(xml).toContain('<rss version="2.0">')
+    expect(xml).toContain('<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">')
     expect(xml).toContain('<title>Blog</title>')
     expect(xml).toContain('<link>https://example.com/blog/hello</link>')
     expect(xml).toContain('<pubDate>Thu, 15 Jan 2026 00:00:00 GMT</pubDate>')
@@ -54,5 +54,38 @@ describe('renderRss', () => {
 
     expect(xml).toContain('<title>A &amp; B</title>')
     expect(xml).toContain('<description>&lt;desc&gt;</description>')
+  })
+
+  it('adds a self link and the newest item date as lastBuildDate', () => {
+    const item = (date: string) => ({
+      title: date,
+      url: `https://example.com/${date}`,
+      description: '',
+      date: new Date(date),
+    })
+    const xml = renderRss({
+      title: 'Blog',
+      description: 'Posts',
+      siteUrl: 'https://example.com',
+      feedUrl: 'https://example.com/rss.xml',
+      items: [item('2026-01-15'), item('2026-03-01'), item('2026-02-01')],
+    })
+
+    expect(xml).toContain(
+      '<atom:link href="https://example.com/rss.xml" rel="self" type="application/rss+xml"/>',
+    )
+    expect(xml).toContain('<lastBuildDate>Sun, 01 Mar 2026 00:00:00 GMT</lastBuildDate>')
+  })
+
+  it('leaves out lastBuildDate and the self link when they are unknown', () => {
+    const xml = renderRss({
+      title: 'Blog',
+      description: '',
+      siteUrl: 'https://example.com',
+      items: [],
+    })
+
+    expect(xml).not.toContain('lastBuildDate')
+    expect(xml).not.toContain('atom:link')
   })
 })

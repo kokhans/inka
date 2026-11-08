@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import type { Element, Root } from 'hast'
+import { describe, expect, it, vi } from 'vitest'
 import { renderMarkdown } from '../src/markdown.js'
 
 const MERMAID = ['```mermaid', 'flowchart TD', '  A --> B', '```'].join('\n')
@@ -70,4 +71,116 @@ describe('renderMarkdown', () => {
     expect(rendered.wordCount).toBe(5)
     expect(rendered.readingTime).toBe(1)
   })
+
+  it('counts prose only, not code, HTML or Markdown syntax', async () => {
+    const code = 'const value = 1\n'.repeat(500)
+    const rendered = await renderMarkdown(
+      [
+        '## Heading words',
+        '',
+        'Read the [docs](https://example.com/a/very/long/url) and `build()` now.',
+        '',
+        '- one',
+        '- two',
+        '',
+        '<div class="note">',
+        '',
+        '```ts',
+        code,
+        '```',
+        '',
+        '```mermaid',
+        'flowchart TD',
+        '  A --> B',
+        '```',
+      ].join('\n'),
+    )
+
+    expect(rendered.wordCount).toBe(10)
+    expect(rendered.readingTime).toBe(1)
+  })
 })
+
+describe('markdown options', () => {
+  const python = ['```python', 'def hello():', '    return 1', '```'].join('\n')
+
+  it('highlights any language bundled with Shiki', async () => {
+    const rendered = await renderMarkdown(python)
+
+    expect(rendered.html).toContain('shiki')
+    expect(rendered.html).toMatch(/<span style="[^"]+">def<\/span>/)
+  })
+
+  it('warns once about an unknown language and renders it as text', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const source = ['```not-a-language', 'plain', '```'].join('\n')
+
+    const rendered = await renderMarkdown(source)
+    await renderMarkdown(source)
+
+    expect(rendered.html).toContain('plain')
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(
+      'loomark: unknown code language "not-a-language", rendered as plain text',
+    )
+    warn.mockRestore()
+  })
+
+  it('does not warn about plain text code blocks', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await renderMarkdown(['```text', 'plain', '```', '', '```', 'no language', '```'].join('\n'))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('uses the configured Shiki themes', async () => {
+    const rendered = await renderMarkdown(python, {
+      markdown: { shiki: { themes: { light: 'min-light', dark: 'nord' } } },
+    })
+
+    expect(rendered.html).toContain('shiki-themes min-light nord')
+  })
+
+  it('runs custom remark and rehype plugins', async () => {
+    const shout =
+      () => (tree: { children: { type: string; children?: { value?: string }[] }[] }) => {
+        for (const node of tree.children) {
+          for (const child of node.children ?? []) {
+            if (typeof child.value === 'string') child.value = child.value.toUpperCase()
+          }
+        }
+      }
+    const external = () => (tree: Root) => {
+      visitElements(tree, (element) => {
+        if (element.tagName === 'a') element.properties['target'] = '_blank'
+      })
+    }
+
+    const rendered = await renderMarkdown('hello [link](https://example.com)', {
+      markdown: { remarkPlugins: [shout], rehypePlugins: [external] },
+    })
+
+    expect(rendered.html).toContain('HELLO')
+    expect(rendered.html).toContain('target="_blank"')
+  })
+
+  it('rewrites image sources through the resolver', async () => {
+    const rendered = await renderMarkdown('![Cover](./cover.png) ![Logo](/logo.png)', {
+      resolveImage: (src) =>
+        Promise.resolve(src.startsWith('./') ? '/assets/cover.png' : undefined),
+    })
+
+    expect(rendered.html).toContain('src="/assets/cover.png"')
+    expect(rendered.html).toContain('src="/logo.png"')
+  })
+})
+
+function visitElements(parent: Root | Element, visit: (element: Element) => void): void {
+  for (const child of parent.children) {
+    if (child.type !== 'element') continue
+    visit(child)
+    visitElements(child, visit)
+  }
+}

@@ -1,9 +1,10 @@
 import path from 'node:path'
 import { parseFrontmatter, type FrontmatterResult } from './frontmatter.js'
+import type { Asset, AssetResult } from './assets.js'
 import { renderMarkdown } from './markdown.js'
 import { readField } from './shared/values.js'
 import { slugFromFile } from './slug.js'
-import type { Entry, RuntimeCollection, ValidationError } from './types.js'
+import type { Entry, MarkdownOptions, RuntimeCollection, ValidationError } from './types.js'
 import { validateFrontmatter } from './validate.js'
 
 export type EntryInput = {
@@ -13,11 +14,18 @@ export type EntryInput = {
   cwd: string
   collectionName: string
   definition: RuntimeCollection
+  markdown?: MarkdownOptions
+  resolveAsset?: (markdownFile: string, src: string) => Promise<AssetResult>
 }
 
-export type EntryResult = { ok: true; entry: Entry } | { ok: false; errors: ValidationError[] }
+/** A valid entry can still carry errors, such as a missing image, that fail production builds. */
+export type EntryResult =
+  | { ok: true; entry: Entry; assets: Asset[]; errors: ValidationError[] }
+  | { ok: false; errors: ValidationError[] }
 
 type UrlResolver = (entry: Entry) => string
+
+const FILE_REFERENCE = /^\.\.?\//
 
 export async function createEntry(input: EntryInput): Promise<EntryResult> {
   const file = path.relative(input.cwd, input.filePath).split(path.sep).join('/')
@@ -47,8 +55,24 @@ export async function createEntry(input: EntryInput): Promise<EntryResult> {
   })
   if (!validated.ok) return validated
 
-  const fields = validated.data
-  const rendered = await renderMarkdown(frontmatter.body)
+  const assets: Asset[] = []
+  const assetErrors: ValidationError[] = []
+  const resolveImage = async (src: string, field: string): Promise<string | undefined> => {
+    const result = await input.resolveAsset?.(input.filePath, src)
+    if (!result) return undefined
+    if ('asset' in result) {
+      assets.push(result.asset)
+      return result.asset.url
+    }
+    assetErrors.push({ file, collection: input.collectionName, field, message: result.error })
+    return undefined
+  }
+
+  const fields = await resolveFieldImages(validated.data, resolveImage)
+  const rendered = await renderMarkdown(frontmatter.body, {
+    markdown: input.markdown,
+    resolveImage: (src) => resolveImage(src, 'body'),
+  })
   // `z.object()` strips unknown keys, so fall back to the raw frontmatter for `slug`.
   const slug = slugOf({ ...frontmatter.data, ...fields }, input.folder, input.filePath)
   const excerpt = typeof fields['excerpt'] === 'string' ? fields['excerpt'] : rendered.excerpt
@@ -68,7 +92,25 @@ export async function createEntry(input: EntryInput): Promise<EntryResult> {
     hasMermaid: rendered.hasMermaid,
   }
 
-  return { ok: true, entry: { ...entry, url: resolveUrl(input.definition, entry) } }
+  return {
+    ok: true,
+    entry: { ...entry, url: resolveUrl(input.definition, entry) },
+    assets,
+    errors: assetErrors,
+  }
+}
+
+/** Frontmatter strings such as `cover: ./cover.png` point at files next to the Markdown file. */
+async function resolveFieldImages(
+  fields: Record<string, unknown>,
+  resolveImage: (src: string, field: string) => Promise<string | undefined>,
+): Promise<Record<string, unknown>> {
+  const resolved: Record<string, unknown> = { ...fields }
+  for (const [field, value] of Object.entries(fields)) {
+    if (typeof value !== 'string' || !FILE_REFERENCE.test(value)) continue
+    resolved[field] = (await resolveImage(value, field)) ?? value
+  }
+  return resolved
 }
 
 function slugOf(fields: Record<string, unknown>, folder: string, filePath: string): string {
