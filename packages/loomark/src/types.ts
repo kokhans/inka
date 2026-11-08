@@ -1,3 +1,10 @@
+import type {
+  BundledLanguage,
+  BundledTheme,
+  LanguageRegistration,
+  ThemeRegistrationAny,
+} from 'shiki'
+import type { PluggableList } from 'unified'
 import type { z } from 'zod'
 
 export type EntryFields = Record<string, unknown>
@@ -33,13 +40,23 @@ export type SearchOption = {
   boost?: Record<string, number>
 }
 
+export type RssFeedOptions = {
+  /** File name of the feed, written next to `rss.xml`. Defaults to `<collection>.xml`. */
+  file?: string
+  /** Defaults to the config title. */
+  title?: string
+  /** Defaults to the config description. */
+  description?: string
+}
+
 export type CollectionOptions<S extends z.ZodType> = {
   folder: string
   schema: S
   url: (entry: Entry<z.output<S>>) => string
   sort?: SortOption
   search?: SearchOption
-  rss?: boolean
+  /** `true` adds entries to `rss.xml`. An object gives the collection its own feed. */
+  rss?: boolean | RssFeedOptions
   sitemap?: boolean
   perPage?: number
 }
@@ -52,9 +69,25 @@ export type RuntimeCollection = {
   url: (entry: never) => string
   sort?: SortOption
   search?: SearchOption
-  rss?: boolean
+  /** `true` adds entries to `rss.xml`. An object gives the collection its own feed. */
+  rss?: boolean | RssFeedOptions
   sitemap?: boolean
   perPage?: number
+}
+
+export type ShikiTheme = BundledTheme | ThemeRegistrationAny
+
+export type MarkdownOptions = {
+  /** Remark plugins, run after GitHub Flavored Markdown. */
+  remarkPlugins?: PluggableList
+  /** Rehype plugins, run after heading ids are added and before code is highlighted. */
+  rehypePlugins?: PluggableList
+  shiki?: {
+    /** Light and dark themes. Defaults to `github-light` and `github-dark`. */
+    themes?: { light: ShikiTheme; dark: ShikiTheme }
+    /** Extra languages. Every language bundled with Shiki is loaded on demand already. */
+    langs?: (BundledLanguage | LanguageRegistration)[]
+  }
 }
 
 export type LoomarkConfig = {
@@ -64,6 +97,9 @@ export type LoomarkConfig = {
   contentDir?: string
   outDir?: string
   publicDir?: string
+  /** Folder inside publicDir for images next to Markdown files. Defaults to `loomark`. */
+  assetsDir?: string
+  markdown?: MarkdownOptions
   collections: Record<string, RuntimeCollection>
 }
 

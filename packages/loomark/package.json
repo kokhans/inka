@@ -4,6 +4,29 @@
   "description": "Build-time Markdown content library for React apps",
   "author": "Serhii Kokhan",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kokhans/loomark.git",
+    "directory": "packages/loomark"
+  },
+  "homepage": "https://github.com/kokhans/loomark/tree/main/packages/loomark#readme",
+  "bugs": {
+    "url": "https://github.com/kokhans/loomark/issues"
+  },
+  "keywords": [
+    "markdown",
+    "frontmatter",
+    "content",
+    "react",
+    "nextjs",
+    "react-router",
+    "tanstack-start",
+    "vite",
+    "static-site",
+    "search",
+    "sitemap",
+    "rss"
+  ],
   "type": "module",
   "sideEffects": false,
   "engines": {
@@ -12,6 +35,9 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "loomark": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -47,15 +73,18 @@
       "types": "./dist/seo.d.ts",
       "import": "./dist/seo.js",
       "default": "./dist/seo.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "tsdown",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "jiti": "^2.7.0",
     "minisearch": "^7.2.0",
     "rehype-slug": "^6.0.0",
     "rehype-stringify": "^10.0.1",

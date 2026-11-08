@@ -143,6 +143,7 @@ export function createCollection<T extends object>(
     entries.map((entry) => reviveDates(entry, config.dates)),
     config.sort,
   )
+  const positions = indexBySlug(items)
 
   function all(): T[]
   function all(options: { select: readonly string[] }): Partial<T>[]
@@ -155,7 +156,8 @@ export function createCollection<T extends object>(
   }
 
   function get(slug: string): T | undefined {
-    return items.find((entry) => readField(entry, 'slug') === slug)
+    const index = positions.get(slug)
+    return index === undefined ? undefined : items[index]
   }
 
   function query(): QueryResult<T>
@@ -191,8 +193,8 @@ export function createCollection<T extends object>(
   }
 
   function adjacent(slug: string): AdjacentEntries<T> {
-    const index = items.findIndex((entry) => readField(entry, 'slug') === slug)
-    if (index === -1) return { prev: undefined, next: undefined }
+    const index = positions.get(slug)
+    if (index === undefined) return { prev: undefined, next: undefined }
     return { prev: items[index - 1], next: items[index + 1] }
   }
 
@@ -217,6 +219,16 @@ export function createCollection<T extends object>(
   }
 
   return { name: config.name, all, list, get, query, distinct, adjacent, related }
+}
+
+/** Maps each slug to its position in the sorted entries. The first entry wins on duplicates. */
+function indexBySlug(items: readonly object[]): Map<unknown, number> {
+  const positions = new Map<unknown, number>()
+  items.forEach((entry, index) => {
+    const slug = readField(entry, 'slug')
+    if (!positions.has(slug)) positions.set(slug, index)
+  })
+  return positions
 }
 
 function sharedValues(left: unknown[], right: unknown[]): number {
