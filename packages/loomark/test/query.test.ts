@@ -41,6 +41,19 @@ describe('collection basics', () => {
     expect(posts.get('missing')).toBeUndefined()
   })
 
+  it('returns the first sorted entry for a duplicate slug', () => {
+    const duplicates = createCollection(
+      [
+        makeEntry({ slug: 'same', title: 'Older', date: new Date('2026-01-01') }),
+        makeEntry({ slug: 'same', title: 'Newer', date: new Date('2026-02-01') }),
+      ],
+      { name: 'posts', sort: { date: 'desc' } },
+    )
+
+    expect(duplicates.get('same')?.title).toBe('Newer')
+    expect(duplicates.adjacent('same').next?.title).toBe('Older')
+  })
+
   it('removes html and body from list items', () => {
     const [item] = posts.list()
 

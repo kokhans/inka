@@ -1,12 +1,13 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { createJiti } from 'jiti'
 import {
   assertCollectionName,
   renderIndexModule,
   renderIndexTypes,
   type BuiltCollection,
 } from './codegen.js'
+import { createAssets, DEFAULT_ASSETS_DIR, type Assets } from './assets.js'
 import { createEntry, isDraft } from './entry.js'
 import { renderRss, type RssItem } from './rss.js'
 import { createSearchIndex } from './search-index.js'
@@ -21,6 +22,7 @@ import type {
   BuildResult,
   Entry,
   LoomarkConfig,
+  RssFeedOptions,
   Project,
   RuntimeCollection,
   ValidationError,
@@ -32,8 +34,11 @@ const DEFAULT_CONTENT_DIR = 'content'
 const DEFAULT_OUT_DIR = '.loomark'
 const MARKDOWN_EXTENSION = '.md'
 const TYPESCRIPT_EXTENSION = '.ts'
-
-let configVersion = 0
+const JSON_EXTENSION = '.json'
+const XML_EXTENSION = '.xml'
+const GENERATED_FILES = new Set(['index.js', 'index.d.ts'])
+const COMBINED_FEED = 'rss.xml'
+const FEED_FILE = /^[\w.-]+\.xml$/
 
 type Feed = {
   name: string
@@ -69,14 +74,19 @@ export async function build(options: BuildOptions = {}): Promise<BuildResult> {
   const entries: Record<string, Entry[]> = {}
 
   for (const name of Object.keys(project.config.collections)) assertCollectionName(name)
+  assertFeedFiles(project.config)
+  warnWithoutSiteUrl(project.config, mode)
+
+  const assets = createAssets(project.publicDir, assetsDirOf(project.config))
 
   for (const [name, definition] of Object.entries(project.config.collections)) {
-    const built = await buildCollection(project, mode, name, definition, errors)
+    const built = await buildCollection(project, mode, name, definition, assets, errors)
     collections.push(built)
     entries[name] = built.entries
   }
 
   await writeOutput(project, collections)
+  await assets.write()
 
   if (errors.length > 0) {
     if (mode === 'production') {
@@ -90,12 +100,22 @@ export async function build(options: BuildOptions = {}): Promise<BuildResult> {
   return { entries, errors }
 }
 
+function assetsDirOf(config: LoomarkConfig): string {
+  const dir = path.normalize(config.assetsDir ?? DEFAULT_ASSETS_DIR)
+  // The folder is emptied of stale files on every build, so it must never be publicDir itself.
+  if (dir === '.' || dir.startsWith('..') || path.isAbsolute(dir)) {
+    throw new Error(
+      `loomark: assetsDir must be a subfolder of publicDir, got "${config.assetsDir ?? ''}"`,
+    )
+  }
+  return dir
+}
+
 async function loadConfig(cwd: string, configFile: string | undefined): Promise<LoadedConfig> {
   const file = path.resolve(cwd, configFile ?? DEFAULT_CONFIG_FILE)
-  // Node caches imported modules, so a unique query is needed to pick up config edits in dev.
-  configVersion += 1
-  const url = `${pathToFileURL(file).href}?v=${String(configVersion)}`
-  const loaded = (await import(/* @vite-ignore */ url)) as { default?: unknown }
+  // A fresh module cache on every load picks up edits to the config and to helpers it imports.
+  const jiti = createJiti(import.meta.url, { moduleCache: false })
+  const loaded = await jiti.import<{ default?: unknown }>(file)
 
   if (!isRecord(loaded.default) || !isRecord(loaded.default['collections'])) {
     throw new Error(`loomark: expected ${file} to default-export a config object with collections`)
@@ -109,6 +129,7 @@ async function buildCollection(
   mode: BuildMode,
   name: string,
   definition: RuntimeCollection,
+  assets: Assets,
   errors: ValidationError[],
 ): Promise<BuiltCollection> {
   const folder = path.join(project.contentDir, definition.folder)
@@ -124,14 +145,23 @@ async function buildCollection(
       cwd: project.cwd,
       collectionName: name,
       definition,
+      markdown: project.config.markdown,
+      resolveAsset: assets.resolve,
     })
 
-    if (result.ok) collected.push(result.entry)
-    else errors.push(...result.errors)
+    if (!result.ok) {
+      errors.push(...result.errors)
+      continue
+    }
+    // Drafts are left out of production builds, together with their images and image errors.
+    if (mode === 'production' && isDraft(result.entry)) continue
+
+    collected.push(result.entry)
+    errors.push(...result.errors)
+    for (const asset of result.assets) assets.add(asset)
   }
 
-  const visible = mode === 'production' ? collected.filter((entry) => !isDraft(entry)) : collected
-  const unique = dropDuplicateSlugs(visible, name, errors)
+  const unique = dropDuplicateSlugs(collected, name, errors)
   return { name, definition, entries: sortEntries(unique, definition.sort) }
 }
 
@@ -172,33 +202,50 @@ async function listMarkdownFiles(folder: string): Promise<string[]> {
 
 async function writeOutput(project: Project, collections: BuiltCollection[]): Promise<void> {
   await mkdir(project.outDir, { recursive: true })
+  const written = new Set<string>()
+  const write = async (name: string, content: string): Promise<void> => {
+    written.add(name)
+    await writeFile(path.join(project.outDir, name), content)
+  }
 
   for (const item of collections) {
-    await writeJson(path.join(project.outDir, `${item.name}.json`), item.entries)
-    await writeJson(
-      path.join(project.outDir, `${item.name}.list.json`),
-      item.entries.map(toListItem),
-    )
+    await write(`${item.name}.json`, toJson(item.entries))
+    await write(`${item.name}.list.json`, toJson(item.entries.map(toListItem)))
 
     if (item.definition.search) {
       const index = createSearchIndex(item.definition, item.entries)
-      await writeJson(path.join(project.outDir, `${item.name}.search.json`), index)
+      await write(`${item.name}.search.json`, toJson(index))
     }
   }
 
-  await writeFile(path.join(project.outDir, 'index.js'), renderIndexModule(collections))
-  await writeFile(
-    path.join(project.outDir, 'index.d.ts'),
-    renderIndexTypes(collections, configImportOf(project)),
-  )
+  await write('index.js', renderIndexModule(collections))
+  await write('index.d.ts', renderIndexTypes(collections, configImportOf(project)))
 
   for (const feed of renderFeeds(project, collections)) {
-    await writeFile(path.join(project.outDir, feed.name), feed.content)
+    await write(feed.name, feed.content)
     if (project.publicDir) {
       await mkdir(project.publicDir, { recursive: true })
       await writeFile(path.join(project.publicDir, feed.name), feed.content)
     }
   }
+
+  await removeStaleOutput(project.outDir, written)
+}
+
+/**
+ * Removes generated files that this build did not write, such as the JSON of a renamed collection
+ * or a feed that is no longer configured. Files Loomark never generates are left alone.
+ */
+async function removeStaleOutput(outDir: string, written: Set<string>): Promise<void> {
+  const dirents = await readdir(outDir, { withFileTypes: true })
+  const stale = dirents.filter(
+    (dirent) => dirent.isFile() && isGeneratedFile(dirent.name) && !written.has(dirent.name),
+  )
+  await Promise.all(stale.map((dirent) => rm(path.join(outDir, dirent.name), { force: true })))
+}
+
+function isGeneratedFile(name: string): boolean {
+  return name.endsWith(JSON_EXTENSION) || name.endsWith(XML_EXTENSION) || GENERATED_FILES.has(name)
 }
 
 function renderFeeds(project: Project, collections: BuiltCollection[]): Feed[] {
@@ -214,26 +261,75 @@ function renderFeeds(project: Project, collections: BuiltCollection[]): Feed[] {
       })),
     )
 
-  const rssItems = collections
-    .filter((item) => item.definition.rss === true)
-    .flatMap((item) => item.entries.map((entry) => toRssItem(entry, siteUrl)))
-    .filter((item): item is RssItem => item !== undefined)
-    .sort((left, right) => compareValues(right.date, left.date))
-
   const feeds: Feed[] = [{ name: 'sitemap.xml', content: renderSitemap(sitemapItems) }]
-  if (rssItems.length > 0) {
-    feeds.push({
-      name: 'rss.xml',
-      content: renderRss({
-        title: project.config.title ?? 'Blog',
-        description: project.config.description ?? '',
-        siteUrl,
-        items: rssItems,
-      }),
-    })
+  const renderFeed = (
+    name: string,
+    included: BuiltCollection[],
+    options: RssFeedOptions = {},
+  ): Feed => ({
+    name,
+    content: renderRss({
+      title: options.title ?? project.config.title ?? 'Blog',
+      description: options.description ?? project.config.description ?? '',
+      siteUrl,
+      feedUrl: joinUrl(siteUrl, name),
+      items: rssItemsOf(included, siteUrl),
+    }),
+  })
+
+  // `rss: true` collections share rss.xml, which is only written when it has items.
+  const combined = collections.filter((item) => item.definition.rss === true)
+  if (rssItemsOf(combined, siteUrl).length > 0) feeds.push(renderFeed(COMBINED_FEED, combined))
+
+  for (const item of collections) {
+    const options = item.definition.rss
+    if (typeof options === 'object') {
+      feeds.push(renderFeed(feedFileOf(item.name, options), [item], options))
+    }
   }
 
   return feeds
+}
+
+function rssItemsOf(collections: BuiltCollection[], siteUrl: string): RssItem[] {
+  return collections
+    .flatMap((item) => item.entries.map((entry) => toRssItem(entry, siteUrl)))
+    .filter((item): item is RssItem => item !== undefined)
+    .sort((left, right) => compareValues(right.date, left.date))
+}
+
+function feedFileOf(collection: string, options: RssFeedOptions): string {
+  return options.file ?? `${collection}.xml`
+}
+
+/** Feed files share the output folder with each other and with sitemap.xml, so names must differ. */
+function assertFeedFiles(config: LoomarkConfig): void {
+  const used = new Set(['sitemap.xml', COMBINED_FEED])
+  for (const [name, definition] of Object.entries(config.collections)) {
+    if (typeof definition.rss !== 'object') continue
+    const file = feedFileOf(name, definition.rss)
+    if (!FEED_FILE.test(file)) {
+      throw new Error(
+        `loomark: invalid rss file "${file}" in collection "${name}". Use a file name such as "posts.xml".`,
+      )
+    }
+    if (used.has(file)) {
+      throw new Error(`loomark: rss file "${file}" of collection "${name}" is already used`)
+    }
+    used.add(file)
+  }
+}
+
+let warnedAboutSiteUrl = false
+
+/** Feeds need absolute URLs, so they are skipped without siteUrl. Say so where it matters. */
+function warnWithoutSiteUrl(config: LoomarkConfig, mode: BuildMode): void {
+  if (config.siteUrl || warnedAboutSiteUrl) return
+  const wantsRss = Object.values(config.collections).some((item) => item.rss)
+  if (mode !== 'production' && !wantsRss) return
+
+  warnedAboutSiteUrl = true
+  console.warn('loomark: siteUrl is not set, so sitemap.xml and the RSS feeds are not generated')
 }
 
 function toRssItem(entry: Entry, siteUrl: string): RssItem | undefined {
@@ -275,6 +371,6 @@ function configImportOf(project: Project): string | undefined {
   return relative.startsWith('.') ? relative : `./${relative}`
 }
 
-async function writeJson(filePath: string, value: unknown): Promise<void> {
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`)
+function toJson(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`
 }

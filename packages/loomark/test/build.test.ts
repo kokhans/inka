@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterAll, describe, expect, it, vi } from 'vitest'
@@ -280,6 +280,98 @@ describe('build', () => {
     await expect(readOutput(root, 'sitemap.xml')).rejects.toThrow()
   })
 
+  it('warns once when feeds are skipped for a missing site url', async () => {
+    vi.resetModules()
+    const { build: freshBuild } = await import('../src/build.js')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const root = await createProject({})
+    const config = { ...testConfig(), siteUrl: undefined }
+
+    await freshBuild({ cwd: root, config })
+    await freshBuild({ cwd: root, config, mode: 'production' })
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(
+      'loomark: siteUrl is not set, so sitemap.xml and the RSS feeds are not generated',
+    )
+    warn.mockRestore()
+  })
+
+  it('does not warn in development when no collection has a feed', async () => {
+    vi.resetModules()
+    const { build: freshBuild } = await import('../src/build.js')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const root = await createProject({})
+    const { pages } = testConfig().collections
+
+    await freshBuild({ cwd: root, config: { collections: { pages } }, mode: 'development' })
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('writes one feed per collection with its own title', async () => {
+    const root = await createProject({})
+    const base = testConfig()
+    const config = {
+      ...base,
+      collections: {
+        posts: { ...base.collections.posts, rss: { title: 'Posts only' } },
+        pages: base.collections.pages,
+      },
+    }
+    await build({ cwd: root, config })
+
+    const feed = await readOutput(root, 'posts.xml')
+    expect(feed).toContain('<title>Posts only</title>')
+    expect(feed).toContain('<description>Testing loomark</description>')
+    expect(feed).toContain('<atom:link href="https://example.com/posts.xml" rel="self"')
+    expect(feed).toContain('<link>https://example.com/blog/hello</link>')
+    await expect(readOutput(root, 'rss.xml')).rejects.toThrow()
+    expect(await readFile(path.join(root, 'public', 'posts.xml'), 'utf8')).toBe(feed)
+  })
+
+  it('rejects feed files that clash or are not plain xml file names', async () => {
+    const root = await createProject({})
+    const base = testConfig()
+    const withFeeds = (posts: object, pages: object) => ({
+      ...base,
+      collections: {
+        posts: { ...base.collections.posts, rss: posts },
+        pages: { ...base.collections.pages, rss: pages },
+      },
+    })
+
+    await expect(
+      build({ cwd: root, config: withFeeds({ file: 'feed.xml' }, { file: 'feed.xml' }) }),
+    ).rejects.toThrow('rss file "feed.xml" of collection "pages" is already used')
+    await expect(
+      build({ cwd: root, config: withFeeds({ file: 'sitemap.xml' }, {}) }),
+    ).rejects.toThrow('rss file "sitemap.xml" of collection "posts" is already used')
+    await expect(
+      build({ cwd: root, config: withFeeds({ file: '../feed.xml' }, {}) }),
+    ).rejects.toThrow('invalid rss file "../feed.xml"')
+  })
+
+  it('removes output of collections and feeds that are no longer configured', async () => {
+    const root = await createProject({})
+    await build({ cwd: root, config: testConfig() })
+    await writeFile(path.join(root, '.loomark', 'notes.txt'), 'kept')
+
+    const { posts } = testConfig().collections
+    await build({ cwd: root, config: { collections: { posts } } })
+
+    const files = await readdir(path.join(root, '.loomark'))
+    expect(files.sort()).toEqual([
+      'index.d.ts',
+      'index.js',
+      'notes.txt',
+      'posts.json',
+      'posts.list.json',
+      'posts.search.json',
+    ])
+  })
+
   it('loads the config file and generates typed collections', async () => {
     const root = await createProject({
       'loomark.config.ts': [
@@ -330,6 +422,28 @@ describe('build', () => {
     expect(first.entries['posts'].map((entry) => entry.slug)).toEqual(['about'])
 
     await writeFile(path.join(root, 'loomark.config.ts'), configSource('posts'))
+    const second = await build({ cwd: root })
+    expect(second.entries['posts']).toHaveLength(3)
+  })
+
+  it('picks up edits to helpers imported by the config', async () => {
+    const helperSource = (folder: string): string => `export const folder = '${folder}'\n`
+    const root = await createProject({
+      'folder.ts': helperSource('pages'),
+      'loomark.config.ts': [
+        "import { folder } from './folder.ts'",
+        'const schema = { safeParse: (data: unknown) => ({ success: true, data }) }',
+        'export default {',
+        "  collections: { posts: { folder, schema, url: () => '/' } },",
+        '}',
+        '',
+      ].join('\n'),
+    })
+
+    const first = await build({ cwd: root })
+    expect(first.entries['posts'].map((entry) => entry.slug)).toEqual(['about'])
+
+    await writeFile(path.join(root, 'folder.ts'), helperSource('posts'))
     const second = await build({ cwd: root })
     expect(second.entries['posts']).toHaveLength(3)
   })

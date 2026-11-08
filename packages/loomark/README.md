@@ -4,7 +4,7 @@ Loomark turns folders of Markdown files with YAML frontmatter into typed, querya
 React apps. It works with **Next.js (App Router)**, **React Router v8 (framework mode)** and
 **TanStack Start**.
 
-Content is edited by hand in your editor. There is no admin UI, no database and no CLI.
+Content is edited by hand in your editor. There is no admin UI and no database.
 
 - Everything is generated at build time: JSON data, TypeScript types, a search index,
   `sitemap.xml` and `rss.xml`. No Markdown parsing at runtime, no `import.meta.glob`.
@@ -65,9 +65,10 @@ export default withLoomark({
 ```
 
 `withLoomark` runs `build()` before the config is handed to Next.js, so `next build` and `next dev`
-always start from fresh content. In development it also watches the content folder and rebuilds
-when a Markdown file changes. Changes to `loomark.config.ts` are not watched, so restart `next dev`
-after editing it. `next start` skips the build and serves the content bundled by `next build`.
+always start from fresh content. In development it also watches the content folder and
+`loomark.config.ts`, and rebuilds when a Markdown file or the config changes. Edits to files
+imported by the config apply on the next rebuild. `next start` skips the build and serves the
+content bundled by `next build`.
 
 Map the `#loomark` alias in `package.json`:
 
@@ -106,8 +107,8 @@ export default defineConfig({
 ```
 
 `loomark()` runs `build()` when the dev server or a production build starts, rebuilds on Markdown
-and `loomark.config.ts` changes with the Vite watcher, and triggers a reload. Files imported by
-`loomark.config.ts` are not reloaded, so restart the dev server after editing them.
+and `loomark.config.ts` changes with the Vite watcher, and triggers a reload. Every build loads the
+config fresh, together with the files it imports, so edits to those files apply on the next rebuild.
 
 Dynamic routes are prerendered from the same data:
 
@@ -180,15 +181,17 @@ The `package.json` `imports` alias and the `.gitignore` entry are the same as fo
 
 `defineConfig()` takes:
 
-| Field         | Default      | Description                                                         |
-| ------------- | ------------ | ------------------------------------------------------------------- |
-| `siteUrl`     | –            | Absolute URL of the site. Required for `sitemap.xml` and `rss.xml`. |
-| `title`       | `'Blog'`     | Feed title.                                                         |
-| `description` | `''`         | Feed description.                                                   |
-| `contentDir`  | `'content'`  | Folder that holds the collections.                                  |
-| `outDir`      | `'.loomark'` | Folder for the generated output.                                    |
-| `publicDir`   | –            | When set, the feeds are also copied there.                          |
-| `collections` | –            | Collection definitions keyed by name.                               |
+| Field         | Default      | Description                                                       |
+| ------------- | ------------ | ----------------------------------------------------------------- |
+| `siteUrl`     | –            | Absolute URL of the site. Required for the sitemap and RSS feeds. |
+| `title`       | `'Blog'`     | Feed title.                                                       |
+| `description` | `''`         | Feed description.                                                 |
+| `contentDir`  | `'content'`  | Folder that holds the collections.                                |
+| `outDir`      | `'.loomark'` | Folder for the generated output.                                  |
+| `publicDir`   | –            | Feeds are copied there, and images next to Markdown files.        |
+| `assetsDir`   | `'loomark'`  | Folder inside `publicDir` for those images.                       |
+| `markdown`    | –            | See [Markdown Options](#markdown-options).                        |
+| `collections` | –            | Collection definitions keyed by name.                             |
 
 Collection names become exports of `.loomark/index.js`, so they must be valid JavaScript identifiers
 such as `posts` or `blogPosts`. A name like `blog-posts` or a reserved word fails the build.
@@ -203,7 +206,7 @@ such as `posts` or `blogPosts`. A name like `blog-posts` or a reserved word fail
 | `sort`    | –       | Default sort, for example `{ date: 'desc' }`.                                 |
 | `search`  | –       | `{ fields, boost }`. Enables `<collection>.search.json`.                      |
 | `perPage` | `10`    | Default page size for `query()`.                                              |
-| `rss`     | `false` | Include the collection in `rss.xml`.                                          |
+| `rss`     | `false` | `true` joins `rss.xml`, an object gives the collection its own feed.          |
 | `sitemap` | `true`  | Include the collection in `sitemap.xml`.                                      |
 
 ### Slugs and URLs
@@ -220,6 +223,52 @@ The integrations pick the mode for you: `next dev` and `vite dev` build in devel
 `next build` and `vite build` in production mode. `build()` falls back to `NODE_ENV`. Pass
 `mode: 'development'` or `mode: 'production'` to either integration or to `build()` to override
 it.
+
+### RSS Feeds
+
+Collections with `rss: true` share `rss.xml`. To give a collection a feed of its own, pass an
+object instead:
+
+```ts
+posts: collection({
+  // ...
+  rss: { file: 'posts.xml', title: 'My Blog: Posts', description: 'Every post' },
+}),
+```
+
+`file` defaults to `<collection>.xml`, and `title` and `description` default to the config. Feed
+files must be plain `.xml` file names that no other feed or `sitemap.xml` uses. Every feed has an
+`<atom:link rel="self">` pointing to `siteUrl` plus its file name, and a `<lastBuildDate>` taken
+from its newest entry. An entry needs a string `title` and a `date` to appear in a feed.
+
+Feeds need absolute URLs, so they are only written when `siteUrl` is set. Without it, production
+builds and builds with an `rss` collection print a warning once.
+
+### Images
+
+Images referenced relative to the Markdown file work as you would expect from your editor:
+
+```md
+---
+title: Hello
+cover: ./cover.png
+---
+
+![Diagram](./diagram.png)
+```
+
+Each build copies them to `<publicDir>/<assetsDir>`, `public/loomark` by default, with a content
+hash in the file name, and rewrites the paths to `/loomark/diagram-1a2b3c4d.png`. Frontmatter
+strings that start with `./` or `../`, such as `cover`, are rewritten the same way. URLs and
+root paths like `/logo.png` stay as written.
+
+- A missing image, or a relative image without `publicDir`, is a validation error.
+- Images of drafts are not copied in production builds.
+- Loomark owns the assets folder and removes files no entry references anymore, so keep your own
+  files elsewhere and add the folder to `.gitignore`.
+- Only Markdown images are rewritten, not `<img>` tags in raw HTML.
+- The dev servers rebuild on Markdown changes, so after replacing an image file, save the
+  Markdown file too.
 
 ### Validation
 
@@ -250,10 +299,16 @@ broken config, the error is logged and the dev server keeps running.
   rss.xml
 ```
 
-`posts.json` holds the rendered HTML of every entry, and `.loomark/index.js` imports it. Import
-`.loomark` from server code (Server Components, loaders). In client components that only need titles,
-dates or tags, import `posts.list.json` instead, so the HTML of every entry stays out of the
-browser bundle.
+Collections with their own feed add `<file>.xml`, see [RSS Feeds](#rss-feeds).
+
+Each build removes generated files it did not write, such as the JSON of a renamed collection or
+`rss.xml` once no collection has `rss: true`. Only `.json` and `.xml` files and `index.js` and
+`index.d.ts` are removed, other files in the folder are left alone.
+
+`posts.json` holds the rendered HTML of every entry, and `.loomark/index.js` imports it with
+`with { type: 'json' }`, so it also works in plain Node scripts. Import `.loomark` from server code
+(Server Components, loaders). In client components that only need titles, dates or tags, import
+`posts.list.json` instead, so the HTML of every entry stays out of the browser bundle.
 
 `index.d.ts` points back to your config, so entry types stay in sync with the schemas:
 
@@ -280,7 +335,7 @@ Every entry contains the validated frontmatter fields plus:
 | `excerpt`     | First paragraph, or the `excerpt` field when the schema has one. |
 | `toc`         | `[{ depth, text, id }]` for `h1`–`h4`.                           |
 | `readingTime` | Minutes at 200 words per minute.                                 |
-| `wordCount`   | Number of words in the body.                                     |
+| `wordCount`   | Number of prose words in the body, without code blocks or HTML.  |
 | `hasMermaid`  | `true` when the body contains a Mermaid diagram.                 |
 
 Date fields become `Date` instances at runtime.
@@ -444,14 +499,32 @@ export const Route = createFileRoute('/blog/$slug')({
 })
 ```
 
-- `toMetadata(entry)` returns a Next.js `Metadata` object.
-- `toMeta(entry)` returns React Router meta descriptors.
-- `toHead(entry)` returns TanStack Router `head()` options: meta tags, a canonical link and the
-  JSON-LD script.
-- `jsonLd(entry)` returns a schema.org `BlogPosting` object.
+- `toMetadata(entry, options?)` returns a Next.js `Metadata` object.
+- `toMeta(entry, options?)` returns React Router meta descriptors.
+- `toHead(entry, options?)` returns TanStack Router `head()` options: meta tags, a canonical link
+  and the JSON-LD script.
+- `jsonLd(entry, options?)` returns a schema.org `BlogPosting` object.
 
-All of them use the same field mapper, so title, description, canonical URL and dates stay
-consistent.
+All of them use the same field mapper, so title, description, canonical URL, image, authors and
+dates stay consistent. The optional second argument applies to every helper:
+
+| Option    | Description                                                                |
+| --------- | -------------------------------------------------------------------------- |
+| `siteUrl` | Makes the canonical URL, `og:url` and root-relative images absolute.       |
+| `image`   | Fallback image for entries without `cover`.                                |
+| `author`  | Default author: a name, `{ name, url }` or a list. An entry `author` wins. |
+
+```ts
+const seo = { siteUrl: 'https://myblog.dev', image: '/og.png', author: 'Ada Lovelace' }
+
+export function meta({ data }) {
+  return [...toMeta(data.post, seo), { 'script:ld+json': jsonLd(data.post, seo) }]
+}
+```
+
+Authors become `author` in the JSON-LD, `authors` in Next.js metadata and an `author` meta tag.
+React Router and TanStack Start need `siteUrl` for absolute URLs; in Next.js, `metadataBase` in the
+root layout works too.
 
 ## `build()` API
 
@@ -462,8 +535,9 @@ const { entries, errors } = await build()
 ```
 
 `build()` loads `loomark.config.ts`, generates `.loomark/` and returns every entry per collection
-together with the validation errors. Both integrations call it, and you can call it from your own
-scripts.
+together with the validation errors. The config is loaded fresh on every call, together with the
+files it imports, so repeated calls in a long running process pick up edits. Both integrations call
+it, and you can call it from your own scripts.
 
 Options:
 
@@ -476,12 +550,61 @@ Options:
 
 `resolveProject(options)` returns the resolved paths when you need them in a custom integration.
 
+## CLI
+
+For CI and for setups other than Next.js and Vite, the package ships a `loomark` command:
+
+```bash
+npx loomark build    # generate .loomark/ once
+npx loomark watch    # build, then rebuild on Markdown and config changes
+```
+
+`build` runs in production mode, so drafts are left out, and exits with code 1 when any content
+file is invalid. `watch` runs in development mode and keeps running until Ctrl+C.
+
+| Option            | Default             | Description                       |
+| ----------------- | ------------------- | --------------------------------- |
+| `--config <file>` | `loomark.config.ts` | Config file relative to the root. |
+| `--cwd <dir>`     | the current folder  | Project root.                     |
+| `--mode <mode>`   | depends on command  | `development` or `production`.    |
+| `-h`, `--help`    | –                   | Show the help.                    |
+
 ## Markdown Features
 
 - GitHub Flavored Markdown: tables, task lists, strikethrough.
-- Shiki highlighting at build time with the `github-light` and `github-dark` themes.
+- Shiki highlighting at build time with the `github-light` and `github-dark` themes. Every
+  language Shiki bundles is loaded when a code block uses it. An unknown language renders as plain
+  text with a warning.
 - Heading anchors (`id`) and a table of contents per entry.
 - Mermaid diagrams as `<pre class="mermaid">` with lazy client-side rendering.
+- Images next to the Markdown file, see [Images](#images).
+
+### Markdown Options
+
+```ts
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import remarkMath from 'remark-math'
+
+export default defineConfig({
+  markdown: {
+    remarkPlugins: [remarkMath],
+    rehypePlugins: [[rehypeAutolinkHeadings, { behavior: 'wrap' }]],
+    shiki: {
+      themes: { light: 'min-light', dark: 'nord' },
+      langs: [myGrammar],
+    },
+  },
+  collections: {
+    // ...
+  },
+})
+```
+
+- `remarkPlugins` run after GitHub Flavored Markdown.
+- `rehypePlugins` run after heading ids are added and before code blocks are highlighted.
+- `shiki.themes` takes the names of bundled themes or theme objects. The CSS in
+  [Code Block Styling](#code-block-styling) works for any pair.
+- `shiki.langs` adds languages Shiki does not bundle, as grammar objects.
 
 ## Bundle Sizes
 
@@ -489,10 +612,12 @@ Runtime entries shipped to the browser:
 
 | Entry             | Raw    | Gzip   |
 | ----------------- | ------ | ------ |
-| `loomark/query`   | 9.1 kB | 2.8 kB |
+| `loomark/query`   | 9.0 kB | 2.6 kB |
+| `loomark/seo`     | 3.7 kB | 1.2 kB |
 | `loomark/search`  | 0.9 kB | 0.4 kB |
 | `loomark/mermaid` | 0.7 kB | 0.4 kB |
 
+These entries are built without Node APIs, so they run in any browser or edge runtime.
 `loomark/query` includes its shared sorting helper. `loomark/search` does not include `minisearch`, and
 `loomark/mermaid` does not include `mermaid`; both are loaded from dependencies at runtime.
 
@@ -500,7 +625,7 @@ Runtime entries shipped to the browser:
 
 ### What Is `siteUrl` Used For?
 
-`siteUrl` is only used to generate the two feeds. It affects nothing else.
+`siteUrl` is only used to generate the feeds. It affects nothing else.
 
 - Sitemap `<loc>` values: `joinUrl(siteUrl, entry.url)`, so `/blog/hello` becomes
   `https://myblog.dev/blog/hello`.
@@ -510,10 +635,10 @@ Runtime entries shipped to the browser:
 It does not affect:
 
 - `entry.url`. That stays whatever your `url(entry)` returns, normally a relative path.
-- The SEO helpers. `toMetadata()`, `toMeta()` and `jsonLd()` use `entry.url` as the canonical URL,
-  so `alternates.canonical` and `og:url` are relative unless your `url()` returns absolute URLs.
-  In Next.js, set `metadataBase` in the root layout to make them absolute.
-- Anything else. When `siteUrl` is missing, neither `sitemap.xml` nor `rss.xml` is written.
+- The SEO helpers. They use `entry.url` as the canonical URL unless you pass the same value to
+  them: `toMetadata(post, { siteUrl })`. See [SEO Helpers](#seo-helpers).
+- Anything else. When `siteUrl` is missing, neither `sitemap.xml` nor any RSS feed is written,
+  and production builds print a warning.
 
 `rss.xml` is additionally skipped when no collection opts in with `rss: true`.
 
@@ -648,6 +773,7 @@ What the package expects, independent of the manager:
 - ESM only. `"type": "module"`, and the `exports` map exposes `types`, `import` and `default`
   conditions but no `require`, so `require('loomark')` is not supported.
 - No postinstall scripts and no native modules, `"sideEffects": false`, `"engines": { "node": ">=22" }`.
+- The `loomark` command is a regular `bin` entry, so `npx`, `pnpm exec`, `yarn` and `bunx` run it.
 - `mermaid` is an optional peer dependency. Install it with the same manager when you use
   `loomark/mermaid`.
 - The `#loomark` alias relies on the `imports` field in your `package.json`, which every manager

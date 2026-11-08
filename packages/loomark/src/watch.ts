@@ -1,4 +1,5 @@
 import { watch, type FSWatcher } from 'node:fs'
+import path from 'node:path'
 import { build, resolveProject } from './build.js'
 import type { BuildOptions } from './types.js'
 
@@ -45,14 +46,30 @@ export async function startWatcher(options: BuildOptions = {}): Promise<StopWatc
     await build(options)
   })
 
-  const watcher: FSWatcher = watch(project.contentDir, { recursive: true }, (_event, file) => {
-    if (!file?.endsWith(MARKDOWN_EXTENSION)) return
+  const schedule = (): void => {
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => void rebuild(), REBUILD_DELAY)
-  })
+  }
+
+  const watchers: FSWatcher[] = [
+    watch(project.contentDir, { recursive: true }, (_event, file) => {
+      if (file?.endsWith(MARKDOWN_EXTENSION)) schedule()
+    }),
+  ]
+
+  // An inline config is not reloaded, so only a config file is worth watching. Its folder is
+  // watched rather than the file, because editors often save by replacing the file.
+  if (!options.config && project.configFile) {
+    const configName = path.basename(project.configFile)
+    watchers.push(
+      watch(path.dirname(project.configFile), (_event, file) => {
+        if (file === configName) schedule()
+      }),
+    )
+  }
 
   return () => {
-    watcher.close()
+    for (const watcher of watchers) watcher.close()
     if (timer) clearTimeout(timer)
   }
 }
